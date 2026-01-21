@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="uk-UA">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Book Reader</title>
+
+    <style>
+        :root {
+            --interface-font-size: 20px;
+            --book-font-size: 20px;
+        }
+
+        body {
+            display: flex;
+            margin-left: 0px;
+            margin-right: 0px;
+            margin-top: 20px;
+            margin-bottom: 0px;
+            background-color: #fff;
+            color: #000;
+            font-size: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            height: 20px;
+            border-bottom: 1px solid #000;
+        }
+
+        .toolbar_title {
+            margin-left: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: default;
+        }
+
+        .toolbar_button {
+            height: 100%;
+            padding: 0 10px;
+            background-color: transparent;
+            border: 2px solid transparent;
+            border: none;
+            color: #000;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .toolbox {
+            position: fixed;
+            left: 10px;
+            top: 30px;
+            display: none;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            justify-content: start;
+            align-items: start;
+            padding: 5px;
+            border: 3px solid #000;
+            border-radius: 10px;
+        }
+
+        .toolbox_button {
+            width: 100%;
+            padding: 20px;
+            background-color: transparent;
+            border: 2px solid transparent;
+            border: none;
+            color: #000;
+            font-size: var(--interface-font-size);
+            text-align: left;
+            cursor: pointer;
+
+            &:not(:last-child) {
+                border-bottom: 2px solid #000;
+            }
+        }
+
+        .toolbox_button:hover,
+        .toolbox_button:focus {
+            color: #fff;
+            background-color: #000;
+
+            &:first-child {
+                border-radius: 5px 5px 0 0;
+            }
+
+            &:last-child {
+                border-radius: 0 0 5px 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toolbar">
+        <button class="toolbar_button" type="button" title="Меню" data-toolbox-button>≡</button>
+
+        <span class="toolbar_title" data-toolbar-title></span>
+    </div>
+
+    <div class="toolbox" data-toolbox-container>
+        <button class="toolbox_button" type="button">На весь екран</button>
+        <button class="toolbox_button" type="button">Знайти книгу</button>
+        <button class="toolbox_button" type="button">Додати книгу</button>
+        <button class="toolbox_button" type="button">Очистити бібліотеку</button>
+    </div>
+
+    <script>
+        const ref_toolbar_title = document.querySelector("[data-toolbar-title]");
+        const ref_toolbox = document.querySelector("[data-toolbox-container]");
+
+        const toolbox_button = document.querySelector("[data-toolbox-button]");
+
+        let lang = "uk";
+
+        let is_lib_screen = true;
+        let is_toolbox = false;
+
+        const translation = {
+            library: {
+                en: "Library",
+                uk: "Бібліотека",
+            },
+
+            menu: {
+                en: "Menu",
+                uk: "Меню",
+            },
+
+            full_screen: {
+                en: "Full screen",
+                uk: "На весь екран",
+            },
+
+            find_book: {
+                en: "Find book",
+                uk: "Знайти книгу",
+            },
+
+            add_book: {
+                en: "Add book",
+                uk: "Додати книгу",
+            },
+
+            clean_library: {
+                en: "Clean library",
+                uk: "Очистити бібліотеку",
+            },
+        };
+
+        toolbox_button.title = tr("menu");
+        ref_toolbar_title.textContent = is_lib_screen ? tr("library") : "Книга";
+
+        toolbox_button.addEventListener("click", () => {
+            ref_toolbox.style.display = is_toolbox ? "none" : "flex";
+            is_toolbox = !is_toolbox;
+        });
+
+        function tr(label) {
+            return translation[`${label}`][`${lang}`];
+        };
+    </script>
+</body>
+
+</html>
