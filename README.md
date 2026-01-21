@@ -1,2 +1,1 @@
-# html-book-reader-portable
-Portable HTML book reader
+# Portable HTML book reader
