@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk-UA">
+<html lang="uk">
 
 <head>
     <meta charset="UTF-8">
@@ -104,7 +104,7 @@
 
 <body>
     <div class="toolbar">
-        <button class="toolbar_button" type="button" title="Меню" data-toolbox-button>≡</button>
+        <button class="toolbar_button" type="button" data-toolbox-toggle-button>≡</button>
 
         <span class="toolbar_title" data-toolbar-title></span>
     </div>
@@ -117,16 +117,19 @@
     </div>
 
     <script>
-        const ref_toolbar_title = document.querySelector("[data-toolbar-title]");
-        const ref_toolbox = document.querySelector("[data-toolbox-container]");
+        const toolbar_title = document.querySelector("[data-toolbar-title]");
+        const toolbox_container = document.querySelector("[data-toolbox-container]");
 
-        const toolbox_button = document.querySelector("[data-toolbox-button]");
+        const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
 
         let lang = "uk";
 
         let is_lib_screen = true;
         let is_toolbox = false;
 
+
+
+        // TRANSLATION
         const translation = {
             library: {
                 en: "Library",
@@ -159,16 +162,22 @@
             },
         };
 
-        toolbox_button.title = tr("menu");
-        ref_toolbar_title.textContent = is_lib_screen ? tr("library") : "Книга";
 
-        toolbox_button.addEventListener("click", () => {
-            ref_toolbox.style.display = is_toolbox ? "none" : "flex";
+
+        // 
+        function tr(label) { return translation[`${label}`][`${lang}`]; };
+
+        toolbox_toggle_button.title = tr("menu");
+        toolbar_title.textContent = is_lib_screen ? tr("library") : "Книга";
+
+        toolbox_toggle_button.addEventListener("click", () => {
+            toolbox_container.style.display = is_toolbox ? "none" : "flex";
             is_toolbox = !is_toolbox;
         });
 
-        function tr(label) {
-            return translation[`${label}`][`${lang}`];
+        function change_language(lng) {
+            lang = lng;
+            document.documentElement.setAttribute("lang", lng);
         };
     </script>
 </body>
