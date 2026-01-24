@@ -8,7 +8,7 @@
 
     <style>
         :root {
-            --interface-font-size: 20px;
+            --interface-font-size: 18px;
             --book-font-size: 20px;
         }
 
@@ -24,7 +24,18 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        .toolbar {
+        .close_zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background-color: transparent;
+            z-index: 997
+        }
+
+        .toolbar__container {
             position: fixed;
             top: 0;
             left: 0;
@@ -34,16 +45,17 @@
             width: 100%;
             height: 20px;
             border-bottom: 1px solid #000;
+            z-index: 999;
         }
 
-        .toolbar_title {
+        .toolbar__title {
             margin-left: 10px;
             font-size: 14px;
             font-weight: 700;
             cursor: default;
         }
 
-        .toolbar_button {
+        .toolbar__button {
             height: 100%;
             padding: 0 10px;
             background-color: transparent;
@@ -56,21 +68,28 @@
             cursor: pointer;
         }
 
-        .toolbox {
+        .toolbox__container {
             position: fixed;
             left: 10px;
             top: 30px;
             display: none;
-            flex-direction: column;
-            flex-wrap: nowrap;
-            justify-content: start;
-            align-items: start;
             padding: 5px;
             border: 3px solid #000;
             border-radius: 10px;
+            z-index: 998;
+
+            & div {
+                flex-direction: column;
+                flex-wrap: nowrap;
+                justify-content: start;
+                align-items: start;
+            }
         }
 
-        .toolbox_button {
+        .toolbox__button {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
             width: 100%;
             padding: 20px;
             background-color: transparent;
@@ -86,8 +105,7 @@
             }
         }
 
-        .toolbox_button:hover,
-        .toolbox_button:focus {
+        .toolbox__button:hover {
             color: #fff;
             background-color: #000;
 
@@ -99,38 +117,52 @@
                 border-radius: 0 0 5px 5px;
             }
         }
+
+        .toolbox__main_tools {
+            display: flex;
+        }
+
+        .toolbox__language_list {
+            display: none;
+        }
     </style>
 </head>
 
 <body>
-    <div class="toolbar">
-        <button class="toolbar_button" type="button" data-toolbox-toggle-button>≡</button>
+    <div class="close_zone" data-close-zone></div>
 
-        <span class="toolbar_title" data-toolbar-title></span>
+    <div class="toolbar__container">
+        <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
+        <span class="toolbar__title" data-toolbar-title></span>
     </div>
 
-    <div class="toolbox" data-toolbox-container>
-        <button class="toolbox_button" type="button">На весь екран</button>
-        <button class="toolbox_button" type="button">Знайти книгу</button>
-        <button class="toolbox_button" type="button">Додати книгу</button>
-        <button class="toolbox_button" type="button">Очистити бібліотеку</button>
+    <div class="toolbox__container" data-toolbox-container>
+        <div class="toolbox__main_tools" data-toolbox-main-tools>
+            <button class="toolbox__button" type="button" data-full-screen-button></button>
+            <button class="toolbox__button" type="button" data-find-book-button></button>
+            <button class="toolbox__button" type="button" data-add-book-button></button>
+            <button class="toolbox__button" type="button" data-clear-library-button></button>
+            <button class="toolbox__button" type="button" data-language-button></button>
+        </div>
+
+        <div class="toolbox__language_list" data-language-list>
+            <button class="toolbox__button" type="button" value="back" data-back-button></button>
+        </div>
     </div>
 
     <script>
-        const toolbar_title = document.querySelector("[data-toolbar-title]");
-        const toolbox_container = document.querySelector("[data-toolbox-container]");
-
-        const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
-
-        let lang = "uk";
-
-        let is_lib_screen = true;
-        let is_toolbox = false;
-
-
-
         // TRANSLATION
         const translation = {
+            language: {
+                en: "English",
+                uk: "Українська",
+            },
+
+            back: {
+                en: "Back",
+                uk: "Назад",
+            },
+
             library: {
                 en: "Library",
                 uk: "Бібліотека",
@@ -156,28 +188,125 @@
                 uk: "Додати книгу",
             },
 
-            clean_library: {
-                en: "Clean library",
+            clear_library: {
+                en: "Clear library",
                 uk: "Очистити бібліотеку",
             },
         };
 
 
+        // Refs
+        const toolbar_title = document.querySelector("[data-toolbar-title]");
+        const toolbox_container = document.querySelector("[data-toolbox-container]");
+        const toolbox_main_tools = document.querySelector("[data-toolbox-main-tools]");
+        const language_list = document.querySelector("[data-language-list]");
+        const close_zone = document.querySelector("[data-close-zone]");
 
-        // 
+        // Buttons
+        const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
+        const back_button = document.querySelector("[data-back-button]");
+        const full_screen_button = document.querySelector("[data-full-screen-button]");
+        const find_book_button = document.querySelector("[data-find-book-button]");
+        const add_book_button = document.querySelector("[data-add-book-button]");
+        const clear_book_button = document.querySelector("[data-clear-library-button]");
+        const language_button = document.querySelector("[data-language-button]");
+
+
+        // Switches
+        let lang = "uk";
+        let is_lib_screen = true;
+        let is_toolbox = false;
+
+
+        // Automatic translation for the selected language
         function tr(label) { return translation[`${label}`][`${lang}`]; };
 
-        toolbox_toggle_button.title = tr("menu");
-        toolbar_title.textContent = is_lib_screen ? tr("library") : "Книга";
+        function translateLabels() {
+            toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
+            toolbox_toggle_button.title = tr("menu");
+            back_button.innerHTML = `🠔 &nbsp; ${tr("back")}`;
+            full_screen_button.innerHTML = tr("full_screen");
+            find_book_button.innerHTML = tr("find_book");
+            add_book_button.innerHTML = tr("add_book");
+            clear_book_button.innerHTML = tr("clear_library");
+            language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
+        }
+
+        translateLabels()
+
+
+        // Creates languages list
+        for (l in translation.language) {
+            const lang_button = document.createElement("button");
+
+            lang_button.setAttribute("class", "toolbox__button");
+            lang_button.setAttribute("value", l);
+            lang_button.setAttribute("onclick", `change_language("${l}")`);
+
+            if (l === lang) {
+                lang_button.textContent = "✓ " + translation.language[l];
+                lang_button.setAttribute("style", "font-weight: bold");
+            } else {
+                lang_button.textContent = translation.language[l];
+            };
+
+
+            language_list.appendChild(lang_button);
+        };
+
+
+        // Tracks buttons presses
+        close_zone.addEventListener("click", () => {
+            close_zone.style.display = "none";
+            toolbox_container.style.display = "none";
+            is_toolbox = false;
+
+            console.log("Close toolbox")
+        });
 
         toolbox_toggle_button.addEventListener("click", () => {
             toolbox_container.style.display = is_toolbox ? "none" : "flex";
             is_toolbox = !is_toolbox;
+            language_list.style.display = "none";
+            toolbox_main_tools.style.display = "flex";
+
+            if (is_toolbox) {
+                close_zone.style.display = "block";
+            } else {
+                close_zone.style.display = "none";
+            };
         });
 
+        language_button.addEventListener("click", () => {
+            toolbox_main_tools.style.display = "none";
+            language_list.style.display = "flex";
+        });
+
+        back_button.addEventListener("click", () => {
+            language_list.style.display = "none";
+            toolbox_main_tools.style.display = "flex";
+        });
+
+
+        // Changes the language of the program
         function change_language(lng) {
             lang = lng;
             document.documentElement.setAttribute("lang", lng);
+            translateLabels();
+
+            const ln_l = language_list.querySelectorAll("button");
+
+            ln_l.forEach(ln => {
+                if (ln.value !== lang && ln.value !== "back") {
+                    ln.textContent = translation.language[`${ln.value}`];
+                    ln.setAttribute("style", "font-weight: normal");
+                };
+
+                if (ln.value === lang && ln.value !== "back") {
+                    ln.textContent = "✓ " + translation.language[`${ln.value}`];
+                    ln.setAttribute("style", "font-weight: bold");
+                };
+            });
         };
     </script>
 </body>
