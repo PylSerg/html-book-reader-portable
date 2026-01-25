@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="">
 
 <head>
     <meta charset="UTF-8">
@@ -130,6 +130,7 @@
 
 <body>
     <div class="close_zone" data-close-zone></div>
+    <input type="file" accept=".html" multiple style="display: none;" data-add-file-input>
 
     <div class="toolbar__container">
         <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
@@ -151,6 +152,7 @@
     </div>
 
     <script>
+
         // TRANSLATION
         const translation = {
             language: {
@@ -192,6 +194,16 @@
                 en: "Clear library",
                 uk: "Очистити бібліотеку",
             },
+
+            unknown_author: {
+                en: "Unknown author",
+                uk: "Невідомий автор",
+            },
+
+            no_IndexedDB_message: {
+                en: "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
+                uk: "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
+            },
         };
 
 
@@ -201,6 +213,7 @@
         const toolbox_main_tools = document.querySelector("[data-toolbox-main-tools]");
         const language_list = document.querySelector("[data-language-list]");
         const close_zone = document.querySelector("[data-close-zone]");
+        const add_file_input = document.querySelector("[data-add-file-input]");
 
         // Buttons
         const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
@@ -213,13 +226,13 @@
 
 
         // Switches
-        let lang = "uk";
+        let lang = window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
 
 
         // Automatic translation for the selected language
-        function tr(label) { return translation[`${label}`][`${lang}`]; };
+        function tr(label) { return translation[`${label}`][`${lang}`] || translation[`${label}`].en; };
 
         function translateLabels() {
             toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
@@ -255,13 +268,41 @@
         };
 
 
+        // Create DB
+        window.indexedDB =
+            window.indexedDB ||
+            window.mozIndexedDB ||
+            window.webkitIndexedDB ||
+            window.msIndexedDB;
+
+        window.IDBTransaction =
+            window.IDBTransaction ||
+            window.webkitIDBTransaction ||
+            window.msIDBTransaction;
+
+        window.IDBKeyRange =
+            window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
+        if (!window.indexedDB) window.alert(tr(no_IndexedDB_message));
+
+        let db = {};
+        const db_name = "HTML_BOOK_READER";
+        const request = indexedDB.open(db_name, 1);
+
+        request.onupgradeneeded = function (event) {
+            const db = event.target.result;
+            const objectStore = db.createObjectStore("books", { keyPath: "id" });
+        };
+
+        request.onerror = function (event) { window.alert(event.target.error) };
+        request.onsuccess = function (event) { db = event.target.result; };
+
+
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
             close_zone.style.display = "none";
             toolbox_container.style.display = "none";
             is_toolbox = false;
-
-            console.log("Close toolbox")
         });
 
         toolbox_toggle_button.addEventListener("click", () => {
@@ -275,6 +316,26 @@
             } else {
                 close_zone.style.display = "none";
             };
+        });
+
+        add_book_button.addEventListener("click", () => add_file_input.click());
+
+        add_file_input.addEventListener("change", async (event) => {
+            const files = Array.from(event.target.files);
+
+            for (const file of files) {
+                const text = await file.text();
+                const doc = new DOMParser().parseFromString(text, "text/html");
+                const bookData = {
+                    id: "b_" + Date.now() + Math.random().toString(36).substr(2, 5),
+                    author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
+                    title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
+                    content: doc.body.innerHTML
+                };
+
+                const tx = db.transaction("books", "readwrite");
+                tx.objectStore("books").put(bookData);
+            }
         });
 
         language_button.addEventListener("click", () => {
