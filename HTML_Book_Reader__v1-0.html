@@ -245,7 +245,8 @@
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
         }
 
-        translateLabels()
+        document.documentElement.setAttribute("lang", lang);
+        translateLabels();
 
 
         // Creates languages list
@@ -327,7 +328,8 @@
                 const text = await file.text();
                 const doc = new DOMParser().parseFromString(text, "text/html");
                 const bookData = {
-                    id: "b_" + Date.now() + Math.random().toString(36).substr(2, 5),
+                    id: id_gen(4),
+                    progress: 0,
                     author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
                     title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
                     content: doc.body.innerHTML
@@ -368,6 +370,13 @@
                     ln.setAttribute("style", "font-weight: bold");
                 };
             });
+        };
+
+        // ID generator
+        function id_gen(n = 1) {
+            let id = "";
+            for (let i = 1; i <= n; i++) { id = id + Math.random().toString(36).substring(2, 10); };
+            return id;
         };
     </script>
 </body>
