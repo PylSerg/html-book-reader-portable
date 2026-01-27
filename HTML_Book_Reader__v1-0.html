@@ -8,6 +8,7 @@
 
     <style>
         :root {
+            --interface-background-color: #fff;
             --interface-font-size: 18px;
             --book-font-size: 20px;
         }
@@ -18,10 +19,69 @@
             margin-right: 0px;
             margin-top: 20px;
             margin-bottom: 0px;
-            background-color: #fff;
+            background-color: var(--interface-background-color);
             color: #000;
             font-size: 20px;
             font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .dialog_window {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.75);
+            z-index: 1000;
+        }
+
+        .dialog_window__container {
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 10px;
+            background-color: var(--interface-background-color);
+            border: 3px solid #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .dialog_window__text {
+            padding: 20px;
+            cursor: default;
+        }
+
+        .dialog_window__buttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+            border-top: 1px solid #000;
+        }
+
+        .dialog_window__button {
+            width: 50%;
+            padding: 10px;
+            font-size: var(--interface-font-size);
+            background: var(--interface-background-color);
+            border: none;
+            cursor: pointer;
+
+            &:not(:last-child) {
+                border-right: 1px solid #000;
+            }
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
         }
 
         .close_zone {
@@ -45,6 +105,7 @@
             width: 100%;
             height: 20px;
             border-bottom: 1px solid #000;
+            background-color: var(--interface-background-color);
             z-index: 999;
         }
 
@@ -74,6 +135,7 @@
             top: 30px;
             display: none;
             padding: 5px;
+            background-color: var(--interface-background-color);
             border: 3px solid #000;
             border-radius: 10px;
             z-index: 998;
@@ -125,12 +187,74 @@
         .toolbox__language_list {
             display: none;
         }
+
+        .search_field {
+            display: none;
+        }
+
+        .library__book_list__empty {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            margin-top: 50px;
+            width: 100%;
+            height: 100%;
+            color: #888;
+            font-style: italic;
+        }
+
+        .library__book_list {}
+
+        .author_section {
+            margin-bottom: 30px;
+        }
+
+        .author_title {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            font-weight: bold;
+            border-bottom: 3px solid #000;
+            cursor: default;
+        }
+
+        .author_counter {
+            margin-left: 10px;
+            color: #555;
+            cursor: default;
+        }
+
+        .book_row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-left: 30px;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
+        }
+
+        .book_progress {
+            margin-left: 50px;
+            color: #888;
+            font-style: italic;
+        }
     </style>
 </head>
 
 <body>
     <div class="close_zone" data-close-zone></div>
     <input type="file" accept=".html" multiple style="display: none;" data-add-file-input>
+    <input class="search_field" type="text" name="search" placeholder="" data-search-field>
 
     <div class="toolbar__container">
         <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
@@ -151,6 +275,19 @@
         </div>
     </div>
 
+    <div class="library__books_list" data-books-list></div>
+
+    <div class="dialog_window" data-dialog-window>
+        <div class="dialog_window__container">
+            <div class="dialog_window__text" data-dialog-window-text></div>
+
+            <div class="dialog_window__buttons">
+                <button class="dialog_window__button" type="button" data-cancel-button></button>
+                <button class="dialog_window__button" type="button" data-confirm-button></button>
+            </div>
+        </div>
+    </div>
+
     <script>
 
         // TRANSLATION
@@ -158,6 +295,16 @@
             language: {
                 en: "English",
                 uk: "Українська",
+            },
+
+            confirm: {
+                en: "Yes",
+                uk: "Так",
+            },
+
+            cancel: {
+                en: "Cancel",
+                uk: "Скасувати",
             },
 
             back: {
@@ -200,9 +347,24 @@
                 uk: "Невідомий автор",
             },
 
+            library_empty: {
+                en: "There are no books in your library",
+                uk: "У вашій бібліотеці книг немає",
+            },
+
+            author_books_counter: {
+                en: "Number of books by the author",
+                uk: "Кількість книг автора",
+            },
+
             no_IndexedDB_message: {
                 en: "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
                 uk: "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
+            },
+
+            clear_library_question: {
+                en: "Are you sure want to delete ALL books from the library?",
+                uk: "Ви дійсно хочете видалити УСІ книги з бібліотеки?",
             },
         };
 
@@ -214,19 +376,25 @@
         const language_list = document.querySelector("[data-language-list]");
         const close_zone = document.querySelector("[data-close-zone]");
         const add_file_input = document.querySelector("[data-add-file-input]");
+        const search_field = document.querySelector("[data-search-field]");
+        const dialog_window = document.querySelector("[data-dialog-window]");
+        const dialog_window_text = document.querySelector("[data-dialog-window-text]");
+        const books_list = document.querySelector("[data-books-list]");
 
         // Buttons
         const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
+        const cancel_button = document.querySelector("[data-cancel-button]");
+        const confirm_button = document.querySelector("[data-confirm-button]");
         const back_button = document.querySelector("[data-back-button]");
         const full_screen_button = document.querySelector("[data-full-screen-button]");
         const find_book_button = document.querySelector("[data-find-book-button]");
         const add_book_button = document.querySelector("[data-add-book-button]");
-        const clear_book_button = document.querySelector("[data-clear-library-button]");
+        const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
 
 
         // Switches
-        let lang = window.clientInformation.language;
+        let lang = localStorage.getItem("lang") || window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
 
@@ -237,11 +405,13 @@
         function translateLabels() {
             toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
             toolbox_toggle_button.title = tr("menu");
+            confirm_button.innerHTML = tr("confirm");
+            cancel_button.innerHTML = tr("cancel");
             back_button.innerHTML = `🠔 &nbsp; ${tr("back")}`;
             full_screen_button.innerHTML = tr("full_screen");
             find_book_button.innerHTML = tr("find_book");
             add_book_button.innerHTML = tr("add_book");
-            clear_book_button.innerHTML = tr("clear_library");
+            clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
         }
 
@@ -286,17 +456,83 @@
 
         if (!window.indexedDB) window.alert(tr(no_IndexedDB_message));
 
-        let db = {};
+        let db;
         const db_name = "HTML_BOOK_READER";
         const request = indexedDB.open(db_name, 1);
 
-        request.onupgradeneeded = function (event) {
-            const db = event.target.result;
-            const objectStore = db.createObjectStore("books", { keyPath: "id" });
+
+        request.onupgradeneeded = function (event) { event.target.result.createObjectStore("books", { keyPath: "id" }); };
+        request.onerror = function (event) { window.alert(event.target.error) };
+        request.onsuccess = function (event) {
+            db = event.target.result;
+            renderLibrary();
         };
 
-        request.onerror = function (event) { window.alert(event.target.error) };
-        request.onsuccess = function (event) { db = event.target.result; };
+
+        // Render books library
+        function renderLibrary() {
+            const tx = db.transaction("books", "readonly");
+            const store = tx.objectStore("books");
+            const requestAll = store.getAll();
+
+            requestAll.onsuccess = () => {
+                const books = requestAll.result;
+                const search = search_field.value.toLowerCase();
+
+                if (!books[0]) {
+                    books_list.setAttribute("class", "library__book_list__empty");
+                    books_list.innerHTML = tr("library_empty");
+
+                    const abb = document.createElement("div");
+                    abb.setAttribute("onclick", "add_file_input.click()");
+                    abb.setAttribute("style", "font-weight:bold;font-style:normal;cursor:pointer;");
+                    abb.textContent = "➕ " + tr("add_book");
+                    books_list.appendChild(abb);
+                    return;
+                };
+
+                books_list.setAttribute("class", "library__book_list");
+
+                toolbar_title.innerHTML = `${toolbar_title.textContent} &nbsp;&nbsp; [ ${books.length} ]`;
+
+                const groups = {};
+
+                books.filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search))
+                    .forEach(b => {
+                        if (!groups[b.author]) groups[b.author] = [];
+                        groups[b.author].push(b);
+                    });
+
+                Object.keys(groups).sort().forEach(author => {
+                    const sec = document.createElement("div");
+
+                    sec.className = "author_section";
+
+                    sec.innerHTML = `
+                            <div class="author_title">
+                                <span>${author}</span>
+                                <span class="author_counter" title="${tr('author_books_counter')}">[ ${groups[author].length} ]</span>
+                            </div >
+                        `;
+
+                    groups[author].sort((a, b) => a.title.localeCompare(b.title)).forEach(book => {
+                        const row = document.createElement("div");
+
+                        row.className = "book_row";
+
+                        row.innerHTML = `
+                            <div class="book_link">${book.title}</div>
+                            <div class="book_progress">${book.progress}%</div>
+                        `;
+
+                        row.querySelector(".book_link").onclick = () => openBook(book);
+                        sec.appendChild(row);
+                    });
+
+                    books_list.appendChild(sec);
+                });
+            };
+        };
 
 
         // Tracks buttons presses
@@ -304,6 +540,10 @@
             close_zone.style.display = "none";
             toolbox_container.style.display = "none";
             is_toolbox = false;
+        });
+
+        cancel_button.addEventListener("click", () => {
+            reset_dialog_window();
         });
 
         toolbox_toggle_button.addEventListener("click", () => {
@@ -319,7 +559,9 @@
             };
         });
 
-        add_book_button.addEventListener("click", () => add_file_input.click());
+        add_book_button.addEventListener("click", () => {
+            add_file_input.click()
+        });
 
         add_file_input.addEventListener("change", async (event) => {
             const files = Array.from(event.target.files);
@@ -338,6 +580,20 @@
                 const tx = db.transaction("books", "readwrite");
                 tx.objectStore("books").put(bookData);
             }
+
+            location.reload();
+
+        });
+
+        clear_library_button.addEventListener("click", () => {
+            dialog_window_text.innerHTML = tr("clear_library_question");
+
+            is_toolbox = false;
+            toolbox_container.style.display = "none";
+            close_zone.style.display = "none";
+            dialog_window.style.display = "flex";
+
+            confirm_button.setAttribute("onclick", "clear_library()");
         });
 
         language_button.addEventListener("click", () => {
@@ -351,25 +607,26 @@
         });
 
 
+
+        // Reset dialog window
+        function reset_dialog_window() {
+            dialog_window.style.display = "none";
+            dialog_window_text.innerHTML = "";
+            confirm_button.removeAttribute("onclick");
+        };
+
+        // Delete all books in library
+        function clear_library() {
+            db.transaction("books", "readwrite").objectStore("books").clear();
+            reset_dialog_window();
+            location.reload();
+        };
+
         // Changes the language of the program
         function change_language(lng) {
-            lang = lng;
             document.documentElement.setAttribute("lang", lng);
-            translateLabels();
-
-            const ln_l = language_list.querySelectorAll("button");
-
-            ln_l.forEach(ln => {
-                if (ln.value !== lang && ln.value !== "back") {
-                    ln.textContent = translation.language[`${ln.value}`];
-                    ln.setAttribute("style", "font-weight: normal");
-                };
-
-                if (ln.value === lang && ln.value !== "back") {
-                    ln.textContent = "✓ " + translation.language[`${ln.value}`];
-                    ln.setAttribute("style", "font-weight: bold");
-                };
-            });
+            localStorage.setItem("lang", lng);
+            location.reload();
         };
 
         // ID generator
