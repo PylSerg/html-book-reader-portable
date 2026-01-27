@@ -15,6 +15,8 @@
 
         body {
             display: flex;
+            flex-direction: column;
+            align-items: center;
             margin-left: 0px;
             margin-right: 0px;
             margin-top: 20px;
@@ -188,8 +190,61 @@
             display: none;
         }
 
+        .library__container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .search__container {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            width: 100%;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #aaa;
+        }
+
         .search_field {
-            display: none;
+            width: 100%;
+            margin: 0;
+            padding: 6px;
+            padding-right: calc(var(--interface-font-size)*2);
+            border: none;
+            font-size: var(--interface-font-size);
+            font-style: italic;
+
+            &::placeholder {
+                color: #aaa;
+                font-style: italic;
+            }
+
+            &:focus-visible {
+                outline: none;
+
+                &::placeholder {
+                    color: transparent;
+                }
+            }
+        }
+
+        .search_clear_button {
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 1px 10px;
+            color: #aaa;
+            font-size: var(--interface-font-size);
+            font-weight: bold;
+            background-color: var(--interface-background-color);
+            border: none;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
         }
 
         .library__book_list__empty {
@@ -205,7 +260,9 @@
             font-style: italic;
         }
 
-        .library__book_list {}
+        .library__book_list {
+            padding: 0 10px;
+        }
 
         .author_section {
             margin-bottom: 30px;
@@ -254,7 +311,6 @@
 <body>
     <div class="close_zone" data-close-zone></div>
     <input type="file" accept=".html" multiple style="display: none;" data-add-file-input>
-    <input class="search_field" type="text" name="search" placeholder="" data-search-field>
 
     <div class="toolbar__container">
         <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
@@ -264,7 +320,6 @@
     <div class="toolbox__container" data-toolbox-container>
         <div class="toolbox__main_tools" data-toolbox-main-tools>
             <button class="toolbox__button" type="button" data-full-screen-button></button>
-            <button class="toolbox__button" type="button" data-find-book-button></button>
             <button class="toolbox__button" type="button" data-add-book-button></button>
             <button class="toolbox__button" type="button" data-clear-library-button></button>
             <button class="toolbox__button" type="button" data-language-button></button>
@@ -275,7 +330,14 @@
         </div>
     </div>
 
-    <div class="library__books_list" data-books-list></div>
+    <div class="library__container">
+        <div class="search__container">
+            <input class="search_field" type="text" name="search" data-search-field>
+            <button class="search_clear_button" type="button" data-search-clear-button>⛌</button>
+        </div>
+
+        <div class="library__books_list" data-books-list></div>
+    </div>
 
     <div class="dialog_window" data-dialog-window>
         <div class="dialog_window__container">
@@ -327,11 +389,6 @@
                 uk: "На весь екран",
             },
 
-            find_book: {
-                en: "Find book",
-                uk: "Знайти книгу",
-            },
-
             add_book: {
                 en: "Add book",
                 uk: "Додати книгу",
@@ -355,6 +412,11 @@
             author_books_counter: {
                 en: "Number of books by the author",
                 uk: "Кількість книг автора",
+            },
+
+            search_placeholder: {
+                en: "Search book...",
+                uk: "Шукати книгу...",
             },
 
             no_IndexedDB_message: {
@@ -385,9 +447,9 @@
         const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
         const cancel_button = document.querySelector("[data-cancel-button]");
         const confirm_button = document.querySelector("[data-confirm-button]");
+        const clear_search_button = document.querySelector("[data-search-clear-button]");
         const back_button = document.querySelector("[data-back-button]");
         const full_screen_button = document.querySelector("[data-full-screen-button]");
-        const find_book_button = document.querySelector("[data-find-book-button]");
         const add_book_button = document.querySelector("[data-add-book-button]");
         const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
@@ -407,9 +469,9 @@
             toolbox_toggle_button.title = tr("menu");
             confirm_button.innerHTML = tr("confirm");
             cancel_button.innerHTML = tr("cancel");
+            search_field.setAttribute("placeholder", tr("search_placeholder"));
             back_button.innerHTML = `🠔 &nbsp; ${tr("back")}`;
             full_screen_button.innerHTML = tr("full_screen");
-            find_book_button.innerHTML = tr("find_book");
             add_book_button.innerHTML = tr("add_book");
             clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
@@ -465,19 +527,20 @@
         request.onerror = function (event) { window.alert(event.target.error) };
         request.onsuccess = function (event) {
             db = event.target.result;
-            renderLibrary();
+            render_library();
         };
 
 
         // Render books library
-        function renderLibrary() {
+        function render_library() {
             const tx = db.transaction("books", "readonly");
             const store = tx.objectStore("books");
             const requestAll = store.getAll();
+            const search = search_field.value.toLowerCase();
 
             requestAll.onsuccess = () => {
                 const books = requestAll.result;
-                const search = search_field.value.toLowerCase();
+                const groups = {};
 
                 if (!books[0]) {
                     books_list.setAttribute("class", "library__book_list__empty");
@@ -491,11 +554,8 @@
                     return;
                 };
 
+                books_list.innerHTML = "";
                 books_list.setAttribute("class", "library__book_list");
-
-                toolbar_title.innerHTML = `${toolbar_title.textContent} &nbsp;&nbsp; [ ${books.length} ]`;
-
-                const groups = {};
 
                 books.filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search))
                     .forEach(b => {
@@ -531,6 +591,8 @@
 
                     books_list.appendChild(sec);
                 });
+
+                toolbar_title.innerHTML = `${tr("library")} &nbsp;&nbsp; [ ${document.querySelectorAll(".book_row").length} ]`;
             };
         };
 
@@ -552,6 +614,12 @@
             language_list.style.display = "none";
             toolbox_main_tools.style.display = "flex";
 
+            if (!document.fullscreenElement) {
+                full_screen_button.textContent = tr("full_screen");
+            } else {
+                full_screen_button.textContent = "✓ " + tr("full_screen");
+            };
+
             if (is_toolbox) {
                 close_zone.style.display = "block";
             } else {
@@ -559,7 +627,20 @@
             };
         });
 
+        full_screen_button.addEventListener("click", () => {
+            close_toolbox();
+
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            };
+        });
+
+        search_field.addEventListener("input", () => render_library());
+
         add_book_button.addEventListener("click", () => {
+            close_toolbox();
             add_file_input.click()
         });
 
@@ -586,13 +667,10 @@
         });
 
         clear_library_button.addEventListener("click", () => {
+            close_toolbox();
+
             dialog_window_text.innerHTML = tr("clear_library_question");
-
-            is_toolbox = false;
-            toolbox_container.style.display = "none";
-            close_zone.style.display = "none";
             dialog_window.style.display = "flex";
-
             confirm_button.setAttribute("onclick", "clear_library()");
         });
 
@@ -606,6 +684,11 @@
             toolbox_main_tools.style.display = "flex";
         });
 
+        clear_search_button.addEventListener("click", () => {
+            search_field.value = "";
+            render_library();
+        })
+
 
 
         // Reset dialog window
@@ -613,6 +696,13 @@
             dialog_window.style.display = "none";
             dialog_window_text.innerHTML = "";
             confirm_button.removeAttribute("onclick");
+        };
+
+        // Close toolbox
+        function close_toolbox() {
+            is_toolbox = false;
+            toolbox_container.style.display = "none";
+            close_zone.style.display = "none";
         };
 
         // Delete all books in library
