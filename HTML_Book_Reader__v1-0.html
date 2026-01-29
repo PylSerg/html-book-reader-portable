@@ -264,11 +264,11 @@
             padding: 0 10px;
         }
 
-        .author_section {
+        .author__section {
             margin-bottom: 30px;
         }
 
-        .author_title {
+        .author__title {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -279,13 +279,14 @@
             cursor: default;
         }
 
-        .author_counter {
+        .author__counter {
             margin-left: 10px;
             color: #555;
             cursor: default;
         }
 
-        .book_row {
+        .book__row {
+            position: relative;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -300,7 +301,15 @@
             }
         }
 
-        .book_progress {
+        .book__info {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .book__progress {
             margin-left: 50px;
             color: #888;
             font-style: italic;
@@ -566,33 +575,47 @@
                 Object.keys(groups).sort().forEach(author => {
                     const sec = document.createElement("div");
 
-                    sec.className = "author_section";
+                    sec.className = "author__section";
 
                     sec.innerHTML = `
-                            <div class="author_title">
+                            <div class="author__title">
                                 <span>${author}</span>
-                                <span class="author_counter" title="${tr('author_books_counter')}">[ ${groups[author].length} ]</span>
+                                <span class="author__counter" title="${tr('author_books_counter')}">[ ${groups[author].length} ]</span>
                             </div >
                         `;
 
                     groups[author].sort((a, b) => a.title.localeCompare(b.title)).forEach(book => {
-                        const row = document.createElement("div");
+                        function if_favorite() {
+                            if (book.favorite) return "★";
+                            return "";
+                        };
 
-                        row.className = "book_row";
+                        function if_book_reading() {
+                            if (book.progress > 0) return book.progress + "%";
+                            if (book.progress >= 100) return "✔";
+                            return "";
+                        };
+
+                        const row = document.createElement("div");
+                        row.setAttribute("class", "book__row");
 
                         row.innerHTML = `
-                            <div class="book_link">${book.title}</div>
-                            <div class="book_progress">${book.progress}%</div>
+                            <div class="book__title">${book.title}</div>
+                            <div class="book__info">
+                                <div class="book__progress">${if_book_reading()}</div>
+                                <div class="book__favorite">${if_favorite()}</div>
+                                <div><b>&#8942;</b></div>
+                            </div>
                         `;
 
-                        row.querySelector(".book_link").onclick = () => openBook(book);
+                        row.querySelector(".book__title").onclick = () => openBook(book);
                         sec.appendChild(row);
                     });
 
                     books_list.appendChild(sec);
                 });
 
-                toolbar_title.innerHTML = `${tr("library")} &nbsp;&nbsp; [ ${document.querySelectorAll(".book_row").length} ]`;
+                toolbar_title.innerHTML = `${tr("library")} &nbsp;&nbsp; [ ${document.querySelectorAll(".book__row").length} ]`;
             };
         };
 
@@ -653,6 +676,7 @@
                 const bookData = {
                     id: id_gen(4),
                     progress: 0,
+                    favorite: false,
                     author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
                     title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
                     content: doc.body.innerHTML
