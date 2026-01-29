@@ -38,6 +38,7 @@
             justify-content: center;
             align-items: center;
             background-color: rgba(255, 255, 255, 0.75);
+            pointer-events: all;
             z-index: 1000;
         }
 
@@ -94,6 +95,7 @@
             width: 100vw;
             height: 100vh;
             background-color: transparent;
+            pointer-events: all;
             z-index: 997
         }
 
@@ -140,6 +142,7 @@
             background-color: var(--interface-background-color);
             border: 3px solid #000;
             border-radius: 10px;
+            box-shadow: 5px 5px 10px #555;
             z-index: 998;
 
             & div {
@@ -201,6 +204,7 @@
             flex-direction: row;
             flex-wrap: nowrap;
             width: 100%;
+            margin-top: 10px;
             margin-bottom: 30px;
             border-bottom: 1px solid #aaa;
         }
@@ -266,22 +270,27 @@
 
         .author__section {
             margin-bottom: 30px;
+            border: 3px solid #000;
+            border-radius: 10px;
+            box-shadow: 5px 5px 10px #ccc;
         }
 
         .author__title {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
+            margin-bottom: 0px;
+            padding: 10px;
+            background-color: #eee;
             font-weight: bold;
             border-bottom: 3px solid #000;
+            border-radius: 10px 10px 0 0;
             cursor: default;
         }
 
         .author__counter {
             margin-left: 10px;
-            color: #555;
+            color: #777;
             cursor: default;
         }
 
@@ -290,10 +299,12 @@
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            margin-left: 30px;
             padding: 10px;
-            border-bottom: 1px solid #333;
             cursor: pointer;
+
+            &:not(:last-child) {
+                border-bottom: 1px solid #333;
+            }
 
             &:hover {
                 background-color: #000;
@@ -321,7 +332,11 @@
             right: 0;
             display: none;
             flex-direction: column;
+            padding: 5px;
             background-color: var(--interface-background-color);
+            border: 3px solid #000;
+            border-radius: 10px;
+            box-shadow: -5px 5px 10px #555;
             z-index: 998;
         }
     </style>
@@ -518,7 +533,7 @@
         let lang = localStorage.getItem("lang") || window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
-        let active_book = "";
+        let active_book = false;
 
 
         // Automatic translation for the selected language
@@ -628,12 +643,13 @@
 
                 const fav = document.createElement("div");
                 fav.setAttribute("class", "author__section");
+                fav.setAttribute("style", "margin-bottom: 50px;");
 
                 if (favorites.length > 0) {
                     fav.innerHTML = `
                         <div class="author__title">
-                            <span>${tr("favorite")}</span>
-                            <span class="author__counter">[ ${favorites.length} ]</span>
+                            <span>★ &nbsp; ${tr("favorite")}</span>
+                            <span class="author__counter">${favorites.length}</span>
                         </div>
                     `;
 
@@ -643,15 +659,17 @@
                         const fav_book = document.createElement("div");
                         fav_book.setAttribute("class", "book__row");
 
+                        const row_key = id_gen();
+
                         fav_book.innerHTML = `
-                            <div class="book__title">${book.title} - ${book.author}</div>
+                            <div class="book__title">${book.title} &nbsp;&nbsp; <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span></div>
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
-                                <div onclick="show_actions_tools('${book.id}')"><b>&#8942;</b></div>
+                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', '${row_key}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
-                        add_actions_tools(book, fav_book);
+                        add_actions_tools(book, row_key, fav_book);
                         fav.appendChild(fav_book);
                     });
                 };
@@ -662,7 +680,7 @@
                     sec.innerHTML = `
                             <div class="author__title">
                                 <span>${author}</span>
-                                <span class="author__counter" title="${tr('author_books_counter')}">[ ${groups[author].length} ]</span>
+                                <span class="author__counter" title="${tr('author_books_counter')}">${groups[author].length}</span>
                             </div >
                         `;
 
@@ -675,17 +693,19 @@
                         const row = document.createElement("div");
                         row.setAttribute("class", "book__row");
 
+                        const row_key = id_gen();
+
                         row.innerHTML = `
                             <div class="book__title">${book.title}</div>
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
                                 <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
-                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}')"><b>&#8942;</b></div>
+                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', '${row_key}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
                         row.querySelector(".book__title").onclick = () => openBook(book);
-                        add_actions_tools(book, row);
+                        add_actions_tools(book, row_key, row);
                         sec.appendChild(row);
                     });
 
@@ -700,7 +720,7 @@
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
             close_zone.style.display = "none";
-            document.getElementById(active_book).setAttribute("style", "display: none");
+            if (active_book) document.getElementById(active_book).setAttribute("style", "display: none");
             toolbox_container.style.display = "none";
             is_toolbox = false;
         });
@@ -822,18 +842,19 @@
         };
 
         //
-        function show_actions_tools(id) {
-            active_book = id;
+        function show_actions_tools(book_id, row_key) {
+            active_book = book_id;
             close_zone.style.display = "flex";
-            const current_book = document.getElementById(id);
+            const current_book = document.getElementById(book_id + row_key);
             current_book.setAttribute("style", "display: flex");
         };
 
         //
-        function add_actions_tools(book, row) {
+        function add_actions_tools(book, row_key, row) {
             const act = document.createElement("div");
             act.setAttribute("class", "actions_tools__container");
-            act.setAttribute("id", book.id);
+            act.setAttribute("id", book.id + row_key);
+            act.setAttribute("name", book.id);
 
             act.innerHTML = `
                 <button class="toolbox__button" type="button" onclick="toggle_favorite('${book.id}')">
@@ -870,6 +891,8 @@
                     };
                 };
             };
+
+            close_zone.style.display = "none";
         };
 
         // Changes the language of the program
