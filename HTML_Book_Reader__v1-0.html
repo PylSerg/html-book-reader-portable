@@ -314,6 +314,16 @@
             color: #888;
             font-style: italic;
         }
+
+        .actions_tools__container {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            display: none;
+            flex-direction: column;
+            background-color: var(--interface-background-color);
+            z-index: 998;
+        }
     </style>
 </head>
 
@@ -418,14 +428,54 @@
                 uk: "У вашій бібліотеці книг немає",
             },
 
+            search_placeholder: {
+                en: "Search book...",
+                uk: "Шукати книгу...",
+            },
+
+            favorite: {
+                en: "Favorites books",
+                uk: "Улюблені книги",
+            },
+
             author_books_counter: {
                 en: "Number of books by the author",
                 uk: "Кількість книг автора",
             },
 
-            search_placeholder: {
-                en: "Search book...",
-                uk: "Шукати книгу...",
+            read_title: {
+                en: "Read",
+                uk: "Прочитано",
+            },
+
+            favorite_title: {
+                en: "Added to favorites",
+                uk: "Додано до улюблених",
+            },
+
+            book_actions_title: {
+                en: "Actions",
+                uk: "Дії",
+            },
+
+            add_to_favorites: {
+                en: "Add to favorites",
+                uk: "Додати до улюбленого",
+            },
+
+            remove_from_favorites: {
+                en: "Remove from favorites",
+                uk: "Вилучити з улюбленого",
+            },
+
+            rename_book: {
+                en: "Rename book",
+                uk: "Перейменувати книгу",
+            },
+
+            delete_book: {
+                en: "Delete book",
+                uk: "Видалити книгу",
             },
 
             no_IndexedDB_message: {
@@ -468,6 +518,7 @@
         let lang = localStorage.getItem("lang") || window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
+        let active_book = "";
 
 
         // Automatic translation for the selected language
@@ -549,6 +600,7 @@
 
             requestAll.onsuccess = () => {
                 const books = requestAll.result;
+                const favorites = [];
                 const groups = {};
 
                 if (!books[0]) {
@@ -568,15 +620,45 @@
 
                 books.filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search))
                     .forEach(b => {
+                        if (b.favorite) favorites.push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
+
                         if (!groups[b.author]) groups[b.author] = [];
-                        groups[b.author].push(b);
+                        groups[b.author].push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
                     });
+
+                const fav = document.createElement("div");
+                fav.setAttribute("class", "author__section");
+
+                if (favorites.length > 0) {
+                    fav.innerHTML = `
+                        <div class="author__title">
+                            <span>${tr("favorite")}</span>
+                            <span class="author__counter">[ ${favorites.length} ]</span>
+                        </div>
+                    `;
+
+                    books_list.appendChild(fav);
+
+                    favorites.sort((a, b) => a.title.localeCompare(b.title)).forEach(book => {
+                        const fav_book = document.createElement("div");
+                        fav_book.setAttribute("class", "book__row");
+
+                        fav_book.innerHTML = `
+                            <div class="book__title">${book.title} - ${book.author}</div>
+                            <div class="book__info">
+                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
+                                <div onclick="show_actions_tools('${book.id}')"><b>&#8942;</b></div>
+                            </div>
+                        `;
+
+                        add_actions_tools(book, fav_book);
+                        fav.appendChild(fav_book);
+                    });
+                };
 
                 Object.keys(groups).sort().forEach(author => {
                     const sec = document.createElement("div");
-
-                    sec.className = "author__section";
-
+                    sec.setAttribute("class", "author__section");
                     sec.innerHTML = `
                             <div class="author__title">
                                 <span>${author}</span>
@@ -590,32 +672,27 @@
                             return "";
                         };
 
-                        function if_book_reading() {
-                            if (book.progress > 0) return book.progress + "%";
-                            if (book.progress >= 100) return "✔";
-                            return "";
-                        };
-
                         const row = document.createElement("div");
                         row.setAttribute("class", "book__row");
 
                         row.innerHTML = `
                             <div class="book__title">${book.title}</div>
                             <div class="book__info">
-                                <div class="book__progress">${if_book_reading()}</div>
-                                <div class="book__favorite">${if_favorite()}</div>
-                                <div><b>&#8942;</b></div>
+                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
+                                <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
+                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
                         row.querySelector(".book__title").onclick = () => openBook(book);
+                        add_actions_tools(book, row);
                         sec.appendChild(row);
                     });
 
                     books_list.appendChild(sec);
                 });
 
-                toolbar_title.innerHTML = `${tr("library")} &nbsp;&nbsp; [ ${document.querySelectorAll(".book__row").length} ]`;
+                toolbar_title.innerHTML = `${tr("library")} &nbsp;&nbsp; [ ${books.length} ]`;
             };
         };
 
@@ -623,6 +700,7 @@
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
             close_zone.style.display = "none";
+            document.getElementById(active_book).setAttribute("style", "display: none");
             toolbox_container.style.display = "none";
             is_toolbox = false;
         });
@@ -734,6 +812,64 @@
             db.transaction("books", "readwrite").objectStore("books").clear();
             reset_dialog_window();
             location.reload();
+        };
+
+        // Indicator of reading progress
+        function if_book_reading(progress_info) {
+            if (progress_info > 0) return progress_info + "%";
+            if (progress_info >= 100) return "✔";
+            return "";
+        };
+
+        //
+        function show_actions_tools(id) {
+            active_book = id;
+            close_zone.style.display = "flex";
+            const current_book = document.getElementById(id);
+            current_book.setAttribute("style", "display: flex");
+        };
+
+        //
+        function add_actions_tools(book, row) {
+            const act = document.createElement("div");
+            act.setAttribute("class", "actions_tools__container");
+            act.setAttribute("id", book.id);
+
+            act.innerHTML = `
+                <button class="toolbox__button" type="button" onclick="toggle_favorite('${book.id}')">
+                    ${book.favorite ? tr("remove_from_favorites") : tr("add_to_favorites")}
+                </button>
+                <button class="toolbox__button" type="button" onclick="">${tr("rename_book")}</button>
+                <button class="toolbox__button" type="button" onclick="">${tr("delete_book")}</button>
+            `;
+
+            row.appendChild(act);
+        };
+
+        //
+        function toggle_favorite(id) {
+            const tx = db.transaction(["books"], "readwrite");
+            const store = tx.objectStore("books");
+
+            const getRequest = store.get(id);
+
+            getRequest.onsuccess = function () {
+                const book = getRequest.result;
+
+                if (book) {
+                    book.favorite = !book.favorite;
+
+                    const updateRequest = store.put(book);
+
+                    updateRequest.onsuccess = () => {
+                        render_library();
+                    };
+
+                    updateRequest.onerror = (event) => {
+                        window.alert(event.target.error);
+                    };
+                };
+            };
         };
 
         // Changes the language of the program
