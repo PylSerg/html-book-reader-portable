@@ -96,7 +96,7 @@
             height: 100vh;
             background-color: transparent;
             pointer-events: all;
-            z-index: 997
+            z-index: 998;
         }
 
         .toolbar__container {
@@ -110,7 +110,7 @@
             height: 20px;
             border-bottom: 1px solid #000;
             background-color: var(--interface-background-color);
-            z-index: 999;
+            z-index: 997;
         }
 
         .toolbar__title {
@@ -143,7 +143,7 @@
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: 5px 5px 10px #555;
-            z-index: 998;
+            z-index: 999;
 
             & div {
                 flex-direction: column;
@@ -326,6 +326,16 @@
             font-style: italic;
         }
 
+        .book__actions_button {
+            padding: 0 10px;
+            border-radius: 5px;
+
+            &:hover {
+                background-color: var(--interface-background-color);
+                color: #000;
+            }
+        }
+
         .actions_tools__container {
             position: absolute;
             top: 40px;
@@ -337,7 +347,7 @@
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: -5px 5px 10px #555;
-            z-index: 998;
+            z-index: 999;
         }
     </style>
 </head>
@@ -449,8 +459,8 @@
             },
 
             favorite: {
-                en: "Favorites books",
-                uk: "Улюблені книги",
+                en: "Favorites",
+                uk: "Улюблене",
             },
 
             author_books_counter: {
@@ -666,7 +676,7 @@
                             <div class="book__title">${book.title} &nbsp;&nbsp; <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span></div>
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
-                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -701,7 +711,7 @@
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
                                 <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
-                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -719,10 +729,8 @@
 
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
-            close_zone.style.display = "none";
-            if (active_row_actions) document.getElementById(active_row_actions).remove();
-            toolbox_container.style.display = "none";
-            is_toolbox = false;
+            if (is_toolbox) close_toolbox();
+            if (active_row_actions) close_actions_tools();
         });
 
         cancel_button.addEventListener("click", () => {
@@ -827,6 +835,14 @@
             close_zone.style.display = "none";
         };
 
+        // Close actions tools
+        function close_actions_tools() {
+            document.getElementById(active_row_actions).remove();
+            active_row_actions = false;
+
+            close_zone.style.display = "none";
+        };
+
         // Delete all books in library
         function clear_library() {
             db.transaction("books", "readwrite").objectStore("books").clear();
@@ -895,7 +911,7 @@
                 };
             };
 
-            close_zone.style.display = "none";
+            close_actions_tools();
         };
 
         // Changes the language of the program
