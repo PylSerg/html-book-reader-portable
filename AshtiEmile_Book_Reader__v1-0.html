@@ -275,6 +275,10 @@
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: 5px 5px 10px #ccc;
+
+            &:last-child {
+                margin-bottom: 250px;
+            }
         }
 
         .author__title {
@@ -352,6 +356,25 @@
             box-shadow: -5px 5px 10px #555;
             overflow: auto;
             z-index: 999;
+        }
+
+        .rename_book__form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rename_book__input {
+            margin-top: 10px;
+            margin-bottom: 30px;
+            font-size: var(--book-font-size);
+            border: none;
+            border-bottom: 2px solid #aaa;
+            outline: none;
+        }
+
+        .rename_book__question {
+            margin-top: 30px;
+            text-align: center;
         }
     </style>
 </head>
@@ -472,6 +495,16 @@
                 uk: "Кількість книг автора",
             },
 
+            book_author: {
+                en: "Author",
+                uk: "Автор",
+            },
+
+            book_title: {
+                en: "Title",
+                uk: "Назва",
+            },
+
             read_title: {
                 en: "Read",
                 uk: "Прочитано",
@@ -505,6 +538,11 @@
             delete_book: {
                 en: "Delete book",
                 uk: "Видалити книгу",
+            },
+
+            rename_book_question: {
+                en: "Rename book?",
+                uk: "Перейменувати книгу?",
             },
 
             delete_book_question: {
@@ -910,22 +948,31 @@
             act.setAttribute("name", book_id);
 
             act.innerHTML = `
-                <button class="toolbox__button" type="button" onclick="toggle_favorite('${book_id}')">
+                <button class="toolbox__button" type="button" 
+                    onclick="toggle_favorite()" >
                     ${book_favorite ? tr("remove_from_favorites") : tr("add_to_favorites")}
                 </button>
-                <button class="toolbox__button" type="button" onclick="">${tr("rename_book")}</button>
-                <button class="toolbox__button" type="button" onclick="create_dialog_window('${tr("delete_book_question")}', 'delete_book()')">${tr("delete_book")}</button>
+
+                <button class="toolbox__button" type="button" 
+                    onclick="rename_book_content()" >
+                    ${tr("rename_book")}
+                </button>
+
+                <button class="toolbox__button" type="button" 
+                    onclick="create_dialog_window('${tr("delete_book_question")}', 'delete_book()')" >
+                    ${tr("delete_book")}
+                </button>
             `;
 
             row.appendChild(act);
         };
 
         // Add to favorites or remove from favorites
-        function toggle_favorite(id) {
+        function toggle_favorite() {
             const tx = db.transaction(["books"], "readwrite");
             const store = tx.objectStore("books");
 
-            const getRequest = store.get(id);
+            const getRequest = store.get(active_book);
 
             getRequest.onsuccess = function () {
                 const book = getRequest.result;
@@ -944,6 +991,56 @@
                     };
                 };
             };
+
+            getRequest.onerror = function (event) { window.alert(event.target.error) };
+        };
+
+        // Rename book nae or author
+        async function rename_book_content() {
+            const book = await new Promise((resolve) => {
+                const tx = db.transaction("books", "readonly");
+                const store = tx.objectStore("books");
+                const req = store.get(active_book);
+                req.onsuccess = () => resolve(req.result);
+            });
+
+            if (book) {
+                const content = `
+                    <div class="rename_book__form">
+                        <span><b>${tr("book_author")}:</b></span>
+                        <input class="rename_book__input" type="text" id="edit_author" value="${book.author}">
+
+                        <span><b>${tr("book_title")}:</b></span>
+                        <input class="rename_book__input" type="text" id="edit_title" value="${book.title}">
+
+                        <span class="rename_book__question">${tr("rename_book_question")}</span>
+                    </div>
+                `;
+
+                create_dialog_window(content, "rename_book()");
+            }
+        };
+
+        function rename_book() {
+            const newAuthor = document.getElementById("edit_author").value;
+            const newTitle = document.getElementById("edit_title").value;
+
+            const tx = db.transaction("books", "readwrite");
+            const store = tx.objectStore("books");
+
+            const req = store.get(active_book);
+
+            req.onsuccess = () => {
+                const data = req.result;
+                data.author = newAuthor;
+                data.title = newTitle;
+                store.put(data);
+
+                reset_dialog_window();
+                render_library();
+            };
+
+            req.onerror = function (event) { window.alert(event.target.error) };
         };
 
         // Delete book from library
