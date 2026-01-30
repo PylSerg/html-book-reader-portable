@@ -507,6 +507,11 @@
                 uk: "Видалити книгу",
             },
 
+            delete_book_question: {
+                en: "Are you sure you want to remove the book from your library?",
+                uk: "Ви дійсно хочете видалити книгу з бібліотеки?",
+            },
+
             no_IndexedDB_message: {
                 en: "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
                 uk: "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
@@ -547,7 +552,9 @@
         let lang = localStorage.getItem("lang") || window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
+        let is_actions_tools = false;
         let active_row_actions = false;
+        let active_book = false;
 
 
         // Automatic translation for the selected language
@@ -622,6 +629,12 @@
 
         // Render books library
         function render_library() {
+            disable_close_zone();
+
+            is_actions_tools = false;
+            active_row_actions = false;
+            active_book = false;
+
             const tx = db.transaction("books", "readonly");
             const store = tx.objectStore("books");
             const requestAll = store.getAll();
@@ -734,7 +747,7 @@
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
             if (is_toolbox) close_toolbox();
-            if (active_row_actions) close_actions_tools();
+            if (is_actions_tools) close_actions_tools();
         });
 
         cancel_button.addEventListener("click", () => {
@@ -754,9 +767,9 @@
             };
 
             if (is_toolbox) {
-                close_zone.style.display = "block";
+                enable_close_zone();
             } else {
-                close_zone.style.display = "none";
+                disable_close_zone();
             };
         });
 
@@ -802,10 +815,7 @@
 
         clear_library_button.addEventListener("click", () => {
             close_toolbox();
-
-            dialog_window_text.innerHTML = tr("clear_library_question");
-            dialog_window.style.display = "flex";
-            confirm_button.setAttribute("onclick", "clear_library()");
+            create_dialog_window(tr("clear_library_question"), "clear_library()");
         });
 
         language_button.addEventListener("click", () => {
@@ -825,6 +835,25 @@
 
 
 
+        // Enable close zone
+        function enable_close_zone() {
+            close_zone.style.display = "flex";
+        };
+
+        // Disable close zone
+        function disable_close_zone() {
+            close_zone.style.display = "none";
+        };
+
+        // Create dialog window
+        function create_dialog_window(content, fn) {
+            if (is_actions_tools) close_actions_tools();
+
+            dialog_window_text.innerHTML = content;
+            dialog_window.style.display = "flex";
+            confirm_button.setAttribute("onclick", fn);
+        };
+
         // Reset dialog window
         function reset_dialog_window() {
             dialog_window.style.display = "none";
@@ -836,15 +865,14 @@
         function close_toolbox() {
             is_toolbox = false;
             toolbox_container.style.display = "none";
-            close_zone.style.display = "none";
+            disable_close_zone()
         };
 
         // Close actions tools
         function close_actions_tools() {
             document.getElementById(active_row_actions).remove();
             active_row_actions = false;
-
-            close_zone.style.display = "none";
+            disable_close_zone()
         };
 
         // Delete all books in library
@@ -862,9 +890,11 @@
         };
 
         // Show actions tools
-        function show_actions_tools(book, book_favorite, row_id) {
-            close_zone.style.display = "flex";
-            add_actions_tools(book, book_favorite, row_id);
+        function show_actions_tools(book_id, book_favorite, row_id) {
+            active_book = book_id;
+            is_actions_tools = true;
+            enable_close_zone();
+            add_actions_tools(book_id, book_favorite, row_id);
         };
 
         // Add actions tools
@@ -884,7 +914,7 @@
                     ${book_favorite ? tr("remove_from_favorites") : tr("add_to_favorites")}
                 </button>
                 <button class="toolbox__button" type="button" onclick="">${tr("rename_book")}</button>
-                <button class="toolbox__button" type="button" onclick="">${tr("delete_book")}</button>
+                <button class="toolbox__button" type="button" onclick="create_dialog_window('${tr("delete_book_question")}', 'delete_book()')">${tr("delete_book")}</button>
             `;
 
             row.appendChild(act);
@@ -914,8 +944,13 @@
                     };
                 };
             };
+        };
 
-            close_actions_tools();
+        // Delete book from library
+        function delete_book() {
+            db.transaction("books", "readwrite").objectStore("books").delete(active_book);
+            reset_dialog_window();
+            render_library();
         };
 
         // Changes the language of the program
