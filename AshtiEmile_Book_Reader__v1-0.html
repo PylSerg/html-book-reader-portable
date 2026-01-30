@@ -138,11 +138,13 @@
             left: 10px;
             top: 30px;
             display: none;
+            max-height: 70vh;
             padding: 5px;
             background-color: var(--interface-background-color);
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: 5px 5px 10px #555;
+            overflow: auto;
             z-index: 999;
 
             & div {
@@ -342,11 +344,13 @@
             right: 0;
             display: flex;
             flex-direction: column;
+            max-height: 70vh;
             padding: 5px;
             background-color: var(--interface-background-color);
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: -5px 5px 10px #555;
+            overflow: auto;
             z-index: 999;
         }
     </style>
@@ -857,13 +861,13 @@
             return "";
         };
 
-        //
+        // Show actions tools
         function show_actions_tools(book, book_favorite, row_id) {
             close_zone.style.display = "flex";
             add_actions_tools(book, book_favorite, row_id);
         };
 
-        //
+        // Add actions tools
         function add_actions_tools(book_id, book_favorite, row_id) {
             const row = document.getElementById(row_id);
             const actions_box_id = id_gen();
@@ -886,7 +890,7 @@
             row.appendChild(act);
         };
 
-        //
+        // Add to favorites or remove from favorites
         function toggle_favorite(id) {
             const tx = db.transaction(["books"], "readwrite");
             const store = tx.objectStore("books");
