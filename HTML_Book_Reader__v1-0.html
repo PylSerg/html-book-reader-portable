@@ -533,7 +533,7 @@
         let lang = localStorage.getItem("lang") || window.clientInformation.language;
         let is_lib_screen = true;
         let is_toolbox = false;
-        let active_book = false;
+        let active_row = false;
 
 
         // Automatic translation for the selected language
@@ -665,7 +665,7 @@
                             <div class="book__title">${book.title} &nbsp;&nbsp; <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span></div>
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
-                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', '${row_key}')"><b>&#8942;</b></div>
+                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${row_key}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -700,7 +700,7 @@
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
                                 <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
-                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', '${row_key}')"><b>&#8942;</b></div>
+                                <div class="book__actions" title="${tr("book_actions_title")}" onclick="show_actions_tools('${row_key}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -720,7 +720,7 @@
         // Tracks buttons presses
         close_zone.addEventListener("click", () => {
             close_zone.style.display = "none";
-            if (active_book) document.getElementById(active_book).setAttribute("style", "display: none");
+            if (active_row) document.getElementById(active_row).setAttribute("style", "display: none");
             toolbox_container.style.display = "none";
             is_toolbox = false;
         });
@@ -842,10 +842,10 @@
         };
 
         //
-        function show_actions_tools(book_id, row_key) {
-            active_book = book_id;
+        function show_actions_tools(row_key) {
+            active_row = row_key;
             close_zone.style.display = "flex";
-            const current_book = document.getElementById(book_id + row_key);
+            const current_book = document.getElementById(row_key);
             current_book.setAttribute("style", "display: flex");
         };
 
@@ -853,7 +853,7 @@
         function add_actions_tools(book, row_key, row) {
             const act = document.createElement("div");
             act.setAttribute("class", "actions_tools__container");
-            act.setAttribute("id", book.id + row_key);
+            act.setAttribute("id", row_key);
             act.setAttribute("name", book.id);
 
             act.innerHTML = `
