@@ -690,6 +690,10 @@
         let is_actions_tools = false;
         let active_row_actions = false;
         let active_book = false;
+        let library_position = 0;
+        let book_position = 0;
+        let interval_book_position = 0;
+        let set_reading_progress = () => { };
 
 
         // Automatic translation for the selected language
@@ -1007,6 +1011,7 @@
                     favorite: false,
                     read: false,
                     progress: 0,
+                    position: 0,
                     recent: 0,
                     author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
                     title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
@@ -1037,10 +1042,12 @@
         });
 
         back_to_library_button.addEventListener("click", () => {
+            clearInterval(set_reading_progress);
             reader_container.style.display = "none";
             is_lib_screen = true;
             toggle_tools();
             render_library();
+            window.scrollTo(0, parseFloat(library_position));
         });
 
         clear_search_button.addEventListener("click", () => {
@@ -1124,10 +1131,13 @@
                 reader_container.style.display = "flex";
                 toolbar_title.innerHTML = `${book.title} — ${book.author}`;
                 reader_book.innerHTML = book.content;
+                window.scrollTo(0, parseFloat(book.position));
 
+                active_book = id;
                 is_lib_screen = false;
                 toggle_tools();
                 change_recent(id);
+                update_reading_progress();
             };
         };
 
@@ -1153,6 +1163,51 @@
             };
 
             req.onerror = function (event) { window.alert(event.target.error) };
+        };
+
+        // Update book position
+        window.onscroll = () => {
+            if (!is_lib_screen && active_book) {
+                book_position = window.scrollY;
+            } else {
+                library_position = window.scrollY;
+            };
+        };
+
+        function update_reading_progress() {
+            set_reading_progress = setInterval(() => {
+                if (book_position === interval_book_position) return;
+
+                interval_book_position = book_position;
+
+                const winScroll = document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+
+                const tx = db.transaction(["books"], "readwrite");
+                const store = tx.objectStore("books");
+
+                const req = store.get(active_book);
+
+                req.onsuccess = function () {
+                    const book = req.result;
+
+                    if (book) {
+                        book.progress = scrolled.toFixed(0);
+                        book.position = book_position;
+
+                        const updateRequest = store.put(book);
+
+                        updateRequest.onsuccess = () => { };
+
+                        updateRequest.onerror = (event) => {
+                            window.alert(event.target.error);
+                        };
+                    };
+                };
+
+                req.onerror = function (event) { window.alert(event.target.error) };
+            }, 1000);
         };
 
         // Indicator of reading progress
