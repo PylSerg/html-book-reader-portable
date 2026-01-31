@@ -39,7 +39,7 @@
             align-items: center;
             background-color: rgba(255, 255, 255, 0.75);
             pointer-events: all;
-            z-index: 1000;
+            z-index: 1001;
         }
 
         .dialog_window__container {
@@ -96,7 +96,7 @@
             height: 100vh;
             background-color: transparent;
             pointer-events: all;
-            z-index: 998;
+            z-index: 1000;
         }
 
         .toolbar__container {
@@ -110,7 +110,7 @@
             height: 20px;
             border-bottom: 1px solid #000;
             background-color: var(--interface-background-color);
-            z-index: 997;
+            z-index: 999;
         }
 
         .toolbar__left_side,
@@ -174,7 +174,7 @@
             border-radius: 10px;
             box-shadow: 5px 5px 10px #555;
             overflow: auto;
-            z-index: 999;
+            z-index: 1001;
 
             & div {
                 flex-direction: column;
@@ -221,6 +221,10 @@
         }
 
         .toolbox__language_list {
+            display: none;
+        }
+
+        .toolbox__reader_tools {
             display: none;
         }
 
@@ -384,7 +388,7 @@
             border-radius: 10px;
             box-shadow: -5px 5px 10px #555;
             overflow: auto;
-            z-index: 999;
+            z-index: 1001;
         }
 
         .rename_book__form {
@@ -424,15 +428,21 @@
     </div>
 
     <div class="toolbox__container" data-toolbox-container>
-        <div class="toolbox__main_tools" data-toolbox-main-tools>
-            <button class="toolbox__button" type="button" data-full-screen-button></button>
-            <button class="toolbox__button" type="button" data-add-book-button></button>
-            <button class="toolbox__button" type="button" data-clear-library-button></button>
-            <button class="toolbox__button" type="button" data-language-button></button>
+        <div class="toolbox__libraty_tools" data-library-tools>
+            <div class="toolbox__main_tools" data-toolbox-main-tools>
+                <button class="toolbox__button" type="button" data-full-screen-button></button>
+                <button class="toolbox__button" type="button" data-add-book-button></button>
+                <button class="toolbox__button" type="button" data-clear-library-button></button>
+                <button class="toolbox__button" type="button" data-language-button></button>
+            </div>
+
+            <div class="toolbox__language_list" data-language-list>
+                <button class="toolbox__button" type="button" value="back" data-back-button></button>
+            </div>
         </div>
 
-        <div class="toolbox__language_list" data-language-list>
-            <button class="toolbox__button" type="button" value="back" data-back-button></button>
+        <div class="toolbox__reader_tools" data-reader-tools>
+            <button class="toolbox__button" type="button" data-back-to-library-button></button>
         </div>
     </div>
 
@@ -612,6 +622,8 @@
         const reader_book = document.querySelector("[data-reader-book]");
         const toolbar_title = document.querySelector("[data-toolbar-title]");
         const toolbox_container = document.querySelector("[data-toolbox-container]");
+        const toolbox_library_tools = document.querySelector("[data-library-tools]");
+        const toolbox_reader_tools = document.querySelector("[data-reader-tools]");
         const toolbox_main_tools = document.querySelector("[data-toolbox-main-tools]");
         const language_list = document.querySelector("[data-language-list]");
         const close_zone = document.querySelector("[data-close-zone]");
@@ -628,6 +640,7 @@
         const confirm_button = document.querySelector("[data-confirm-button]");
         const clear_search_button = document.querySelector("[data-search-clear-button]");
         const back_button = document.querySelector("[data-back-button]");
+        const back_to_library_button = document.querySelector("[data-back-to-library-button]");
         const full_screen_button = document.querySelector("[data-full-screen-button]");
         const add_book_button = document.querySelector("[data-add-book-button]");
         const clear_library_button = document.querySelector("[data-clear-library-button]");
@@ -654,6 +667,7 @@
             cancel_button.innerHTML = tr("cancel");
             search_field.setAttribute("placeholder", tr("search_placeholder"));
             back_button.innerHTML = `🠔 &nbsp; ${tr("back")}`;
+            back_to_library_button.innerHTML = `🠔 &nbsp; ${tr("library")}`;
             full_screen_button.innerHTML = tr("full_screen");
             add_book_button.innerHTML = tr("add_book");
             clear_library_button.innerHTML = tr("clear_library");
@@ -963,6 +977,9 @@
             toolbox_container.style.display = "none";
             disable_close_zone()
         };
+
+        // Toggle tools
+        function toggle_tools() { };
 
         // Close actions tools
         function close_actions_tools() {
