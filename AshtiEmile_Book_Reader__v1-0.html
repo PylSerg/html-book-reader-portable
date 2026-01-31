@@ -10,7 +10,11 @@
         :root {
             --interface-background-color: #fff;
             --interface-font-size: 18px;
+
             --book-font-size: 20px;
+            --book-line-height: 1.5em;
+            --book-horizontal-paddings: 20%;
+            --book-vertical-paddings: 2%;
         }
 
         body {
@@ -25,6 +29,15 @@
             color: #000;
             font-size: 20px;
             font-family: Arial, Helvetica, sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            text-align: center;
         }
 
         .dialog_window {
@@ -409,6 +422,12 @@
             margin-top: 30px;
             text-align: center;
         }
+
+        .reader__book {
+            line-height: var(--book-line-height);
+            text-align: justify;
+            padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
+        }
     </style>
 </head>
 
@@ -443,6 +462,7 @@
 
         <div class="toolbox__reader_tools" data-reader-tools>
             <button class="toolbox__button" type="button" data-back-to-library-button></button>
+            <button class="toolbox__button" type="button" data-full-screen-button2></button>
         </div>
     </div>
 
@@ -657,6 +677,7 @@
         const back_button = document.querySelector("[data-back-button]");
         const back_to_library_button = document.querySelector("[data-back-to-library-button]");
         const full_screen_button = document.querySelector("[data-full-screen-button]");
+        const full_screen_button2 = document.querySelector("[data-full-screen-button2]");
         const add_book_button = document.querySelector("[data-add-book-button]");
         const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
@@ -684,6 +705,7 @@
             back_button.innerHTML = `🠔 &nbsp; ${tr("back")}`;
             back_to_library_button.innerHTML = `🠔 &nbsp; ${tr("library")}`;
             full_screen_button.innerHTML = tr("full_screen");
+            full_screen_button2.innerHTML = tr("full_screen");
             add_book_button.innerHTML = tr("add_book");
             clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
@@ -934,8 +956,10 @@
 
             if (!document.fullscreenElement) {
                 full_screen_button.textContent = tr("full_screen");
+                full_screen_button2.textContent = tr("full_screen");
             } else {
                 full_screen_button.textContent = "✓ " + tr("full_screen");
+                full_screen_button2.textContent = "✓ " + tr("full_screen");
             };
 
             if (is_toolbox) {
@@ -946,6 +970,16 @@
         });
 
         full_screen_button.addEventListener("click", () => {
+            close_toolbox();
+
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            };
+        });
+
+        full_screen_button2.addEventListener("click", () => {
             close_toolbox();
 
             if (!document.fullscreenElement) {
