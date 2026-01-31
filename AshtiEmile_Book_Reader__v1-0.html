@@ -539,9 +539,14 @@
                 uk: "Шукати книгу...",
             },
 
+            recent: {
+                en: "Reading now",
+                uk: "Зараз читаю",
+            },
+
             favorite: {
-                en: "Favorites",
-                uk: "Улюблене",
+                en: "Favorites books",
+                uk: "Улюблені книги",
             },
 
             author_books_counter: {
@@ -584,6 +589,16 @@
                 uk: "Вилучити з улюбленого",
             },
 
+            mark_as_read: {
+                en: "Mars as read",
+                uk: "Позначити прочитаною",
+            },
+
+            mark_as_unread: {
+                en: "Mars as unread",
+                uk: "Позначити непрочитаною",
+            },
+
             rename_book: {
                 en: "Rename book",
                 uk: "Перейменувати книгу",
@@ -604,14 +619,14 @@
                 uk: "Ви дійсно хочете видалити книгу з бібліотеки?",
             },
 
-            no_IndexedDB_message: {
-                en: "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
-                uk: "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
-            },
-
             clear_library_question: {
                 en: "Are you sure want to delete ALL books from the library?",
                 uk: "Ви дійсно хочете видалити УСІ книги з бібліотеки?",
+            },
+
+            no_IndexedDB_message: {
+                en: "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
+                uk: "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
             },
         };
 
@@ -731,11 +746,14 @@
         // Render books library
         function render_library() {
             disable_close_zone();
+            close_toolbox();
 
             is_lib_screen = true;
             is_actions_tools = false;
             active_row_actions = false;
             active_book = false;
+
+            library_container.style.display = "block";
 
             const tx = db.transaction("books", "readonly");
             const store = tx.objectStore("books");
@@ -744,6 +762,8 @@
 
             requestAll.onsuccess = () => {
                 const books = requestAll.result;
+
+                let recent = { recent: 0 };
                 const favorites = [];
                 const groups = {};
 
@@ -762,6 +782,10 @@
                 books_list.innerHTML = "";
                 books_list.setAttribute("class", "library__book_list");
 
+                books.forEach(b => {
+                    if (b.recent > recent.recent && !b.read) recent = b;
+                });
+
                 books.filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search))
                     .forEach(b => {
                         if (b.favorite) favorites.push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
@@ -770,6 +794,43 @@
                         groups[b.author].push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
                     });
 
+                // Recent book
+                const rec = document.createElement("div");
+                rec.setAttribute("class", "author__section");
+                rec.setAttribute("style", "margin-bottom: 50px;");
+
+                if (recent.title) {
+                    rec.innerHTML = `
+                        <div class="author__title">
+                            <span>↪ &nbsp; ${tr("recent")}</span>
+                        </div>
+                    `;
+
+                    books_list.appendChild(rec);
+
+                    const row_id = id_gen();
+
+                    const rec_book = document.createElement("div");
+                    rec_book.setAttribute("class", "book__row");
+                    rec_book.setAttribute("id", row_id);
+                    rec_book.setAttribute("onclick", `open_book('${recent.id}')`);
+
+                    rec_book.innerHTML = `
+                        <div class="book__title">
+                            <span>${recent.title} &nbsp;&nbsp;</span> 
+                            <span style="color: #aaa; font-style: italic;">[ ${recent.author} ]</span>
+                        </div>
+
+                        <div class="book__info">
+                            <div class="book__progress" title="${tr("read_title")}">${if_book_reading(recent.progress)}</div>
+                            <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${recent.id}', ${recent.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                        </div>
+                    `;
+
+                    rec.appendChild(rec_book);
+                };
+
+                // Favorites books
                 const fav = document.createElement("div");
                 fav.setAttribute("class", "author__section");
                 fav.setAttribute("style", "margin-bottom: 50px;");
@@ -808,6 +869,7 @@
                     });
                 };
 
+                // All books
                 Object.keys(groups).sort().forEach(author => {
                     const sec = document.createElement("div");
                     sec.setAttribute("class", "author__section");
@@ -908,8 +970,10 @@
                 const doc = new DOMParser().parseFromString(text, "text/html");
                 const bookData = {
                     id: id_gen(4),
-                    progress: 0,
                     favorite: false,
+                    read: false,
+                    progress: 0,
+                    recent: 0,
                     author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
                     title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
                     content: doc.body.innerHTML
@@ -936,6 +1000,13 @@
         back_button.addEventListener("click", () => {
             language_list.style.display = "none";
             toolbox_main_tools.style.display = "flex";
+        });
+
+        back_to_library_button.addEventListener("click", () => {
+            reader_container.style.display = "none";
+            is_lib_screen = true;
+            toggle_tools();
+            render_library();
         });
 
         clear_search_button.addEventListener("click", () => {
@@ -979,7 +1050,15 @@
         };
 
         // Toggle tools
-        function toggle_tools() { };
+        function toggle_tools() {
+            if (is_lib_screen) {
+                toolbox_library_tools.style.display = "flex";
+                toolbox_reader_tools.style.display = "none";
+            } else {
+                toolbox_library_tools.style.display = "none";
+                toolbox_reader_tools.style.display = "flex";
+            };
+        };
 
         // Close actions tools
         function close_actions_tools() {
@@ -1009,9 +1088,37 @@
             if (book) {
                 library_container.style.display = "none";
                 reader_container.style.display = "flex";
-                toolbar_title.innerHTML = `${book.title} — ${book.author}`,
-                    reader_book.innerHTML = book.content;
+                toolbar_title.innerHTML = `${book.title} — ${book.author}`;
+                reader_book.innerHTML = book.content;
+
+                is_lib_screen = false;
+                toggle_tools();
+                change_recent(id);
             };
+        };
+
+        // Change recent
+        function change_recent(id) {
+            const tx = db.transaction(["books"], "readwrite");
+            const store = tx.objectStore("books");
+
+            const req = store.get(id);
+
+            req.onsuccess = function () {
+                const book = req.result;
+
+                if (book) {
+                    book.recent = Date.now();
+
+                    const updateRequest = store.put(book);
+
+                    updateRequest.onerror = (event) => {
+                        window.alert(event.target.error);
+                    };
+                };
+            };
+
+            req.onerror = function (event) { window.alert(event.target.error) };
         };
 
         // Indicator of reading progress
