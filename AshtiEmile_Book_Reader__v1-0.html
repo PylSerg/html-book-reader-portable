@@ -105,7 +105,7 @@
             left: 0;
             display: flex;
             flex-direction: row;
-            align-items: center;
+            justify-content: space-between;
             width: 100%;
             height: 20px;
             border-bottom: 1px solid #000;
@@ -113,11 +113,11 @@
             z-index: 997;
         }
 
-        .toolbar__title {
-            margin-left: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: default;
+        .toolbar__left_side,
+        .toolbar__right_side {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
         }
 
         .toolbar__button {
@@ -131,6 +131,35 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
+        }
+
+        .toolbar__title {
+            margin-left: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: default;
+        }
+
+        .reload_page_button {
+            height: 100%;
+            color: #555;
+            font-size: 14px;
+            font-weight: 700;
+            background-color: var(--interface-background-color);
+            border: none;
+            margin: 0;
+            padding: 0 10px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
         }
 
         .toolbox__container {
@@ -384,8 +413,14 @@
     <input type="file" accept=".html" multiple style="display: none;" data-add-file-input>
 
     <div class="toolbar__container">
-        <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
-        <span class="toolbar__title" data-toolbar-title></span>
+        <div class="toolbar__left_side">
+            <button class="toolbar__button" type="button" data-toolbox-toggle-button>≡</button>
+            <span class="toolbar__title" data-toolbar-title></span>
+        </div>
+
+        <div class="toolbar__right_side">
+            <button class="reload_page_button" type="button" data-reload-page>↻</button>
+        </div>
     </div>
 
     <div class="toolbox__container" data-toolbox-container>
@@ -401,13 +436,17 @@
         </div>
     </div>
 
-    <div class="library__container">
+    <div class="library__container" data-library-container>
         <div class="search__container">
             <input class="search_field" type="text" name="search" data-search-field>
             <button class="search_clear_button" type="button" data-search-clear-button>⛌</button>
         </div>
 
         <div class="library__books_list" data-books-list></div>
+    </div>
+
+    <div class="reader__container" data-reader-container>
+        <div class="reader__book" data-reader-book></div>
     </div>
 
     <div class="dialog_window" data-dialog-window>
@@ -453,6 +492,11 @@
             menu: {
                 en: "Menu",
                 uk: "Меню",
+            },
+
+            reload_page: {
+                en: "Reload page",
+                uk: "Перезавантажити сторінку",
             },
 
             full_screen: {
@@ -563,6 +607,9 @@
 
 
         // Refs
+        const library_container = document.querySelector("[data-library-container]");
+        const reader_container = document.querySelector("[data-reader-container]");
+        const reader_book = document.querySelector("[data-reader-book]");
         const toolbar_title = document.querySelector("[data-toolbar-title]");
         const toolbox_container = document.querySelector("[data-toolbox-container]");
         const toolbox_main_tools = document.querySelector("[data-toolbox-main-tools]");
@@ -575,6 +622,7 @@
         const books_list = document.querySelector("[data-books-list]");
 
         // Buttons
+        const reload_page = document.querySelector("[data-reload-page]");
         const toolbox_toggle_button = document.querySelector("[data-toolbox-toggle-button]");
         const cancel_button = document.querySelector("[data-cancel-button]");
         const confirm_button = document.querySelector("[data-confirm-button]");
@@ -598,9 +646,10 @@
         // Automatic translation for the selected language
         function tr(label) { return translation[`${label}`][`${lang}`] || translation[`${label}`].en; };
 
-        function translateLabels() {
-            toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
+        function translate_labels() {
             toolbox_toggle_button.title = tr("menu");
+            toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
+            reload_page.setAttribute("title", tr("reload_page"));
             confirm_button.innerHTML = tr("confirm");
             cancel_button.innerHTML = tr("cancel");
             search_field.setAttribute("placeholder", tr("search_placeholder"));
@@ -612,7 +661,7 @@
         }
 
         document.documentElement.setAttribute("lang", lang);
-        translateLabels();
+        translate_labels();
 
 
         // Creates languages list
@@ -669,6 +718,7 @@
         function render_library() {
             disable_close_zone();
 
+            is_lib_screen = true;
             is_actions_tools = false;
             active_row_actions = false;
             active_book = false;
@@ -726,12 +776,17 @@
                         const fav_book = document.createElement("div");
                         fav_book.setAttribute("class", "book__row");
                         fav_book.setAttribute("id", row_id);
+                        fav_book.setAttribute("onclick", `open_book('${book.id}')`);
 
                         fav_book.innerHTML = `
-                            <div class="book__title">${book.title} &nbsp;&nbsp; <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span></div>
+                            <div class="book__title">
+                                <span>${book.title} &nbsp;&nbsp;</span> 
+                                <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span>
+                            </div>
+
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
-                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -760,17 +815,18 @@
                         const row = document.createElement("div");
                         row.setAttribute("class", "book__row");
                         row.setAttribute("id", row_id);
+                        row.setAttribute("onclick", `open_book('${book.id}')`);
 
                         row.innerHTML = `
                             <div class="book__title">${book.title}</div>
+
                             <div class="book__info">
                                 <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
                                 <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
-                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
-                        row.querySelector(".book__title").onclick = () => openBook(book);
                         sec.appendChild(row);
                     });
 
@@ -783,6 +839,8 @@
 
 
         // Tracks buttons presses
+        reload_page.addEventListener("click", () => { location.reload() });
+
         close_zone.addEventListener("click", () => {
             if (is_toolbox) close_toolbox();
             if (is_actions_tools) close_actions_tools();
@@ -909,6 +967,7 @@
         // Close actions tools
         function close_actions_tools() {
             document.getElementById(active_row_actions).remove();
+            is_actions_tools = false;
             active_row_actions = false;
             disable_close_zone()
         };
@@ -918,6 +977,24 @@
             db.transaction("books", "readwrite").objectStore("books").clear();
             reset_dialog_window();
             location.reload();
+        };
+
+        // Open selected book
+        async function open_book(id) {
+            const book = await new Promise((resolve) => {
+                const tx = db.transaction("books", "readonly");
+                const store = tx.objectStore("books");
+                const req = store.get(id);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = function (event) { window.alert(event.target.error) };
+            });
+
+            if (book) {
+                library_container.style.display = "none";
+                reader_container.style.display = "flex";
+                toolbar_title.innerHTML = `${book.title} — ${book.author}`,
+                    reader_book.innerHTML = book.content;
+            };
         };
 
         // Indicator of reading progress
@@ -949,17 +1026,17 @@
 
             act.innerHTML = `
                 <button class="toolbox__button" type="button" 
-                    onclick="toggle_favorite()" >
+                    onclick="event.stopPropagation(); toggle_favorite()" >
                     ${book_favorite ? tr("remove_from_favorites") : tr("add_to_favorites")}
                 </button>
 
                 <button class="toolbox__button" type="button" 
-                    onclick="rename_book_content()" >
+                    onclick="event.stopPropagation(); rename_book_content()" >
                     ${tr("rename_book")}
                 </button>
 
                 <button class="toolbox__button" type="button" 
-                    onclick="create_dialog_window('${tr("delete_book_question")}', 'delete_book()')" >
+                    onclick="event.stopPropagation(); create_dialog_window('${tr("delete_book_question")}', 'delete_book()')" >
                     ${tr("delete_book")}
                 </button>
             `;
@@ -972,10 +1049,10 @@
             const tx = db.transaction(["books"], "readwrite");
             const store = tx.objectStore("books");
 
-            const getRequest = store.get(active_book);
+            const req = store.get(active_book);
 
-            getRequest.onsuccess = function () {
-                const book = getRequest.result;
+            req.onsuccess = function () {
+                const book = req.result;
 
                 if (book) {
                     book.favorite = !book.favorite;
@@ -992,7 +1069,7 @@
                 };
             };
 
-            getRequest.onerror = function (event) { window.alert(event.target.error) };
+            req.onerror = function (event) { window.alert(event.target.error) };
         };
 
         // Rename book nae or author
