@@ -1006,6 +1006,11 @@
             for (const file of files) {
                 const text = await file.text();
                 const doc = new DOMParser().parseFromString(text, "text/html");
+
+                doc.querySelectorAll("p").forEach((p, index) => {
+                    p.id = id_gen();
+                });
+
                 const bookData = {
                     id: id_gen(4),
                     favorite: false,
@@ -1023,7 +1028,6 @@
             }
 
             location.reload();
-
         });
 
         clear_library_button.addEventListener("click", () => {
@@ -1131,7 +1135,14 @@
                 reader_container.style.display = "flex";
                 toolbar_title.innerHTML = `${book.title} — ${book.author}`;
                 reader_book.innerHTML = book.content;
-                window.scrollTo(0, parseFloat(book.position));
+
+                if (book.position !== 0) {
+                    const recent_paragraph = document.getElementById(book.position);
+                    const recent_paragraph_position = recent_paragraph.getBoundingClientRect().top + window.scrollY;
+                    const offsetPosition = recent_paragraph_position - 30;
+
+                    window.scrollTo({ top: offsetPosition });
+                };
 
                 active_book = id;
                 is_lib_screen = false;
@@ -1168,11 +1179,28 @@
         // Update book position
         window.onscroll = () => {
             if (!is_lib_screen && active_book) {
-                book_position = window.scrollY;
+                book_position = get_current_paragraph_id();
             } else {
                 library_position = window.scrollY;
             };
         };
+
+        function get_current_paragraph_id() {
+            const paragraphs = document.querySelectorAll("p");
+            let closest_id = null;
+            let min_dist = Infinity;
+
+            paragraphs.forEach(p => {
+                const rect = p.getBoundingClientRect();
+                const dist = Math.abs(rect.top);
+
+                if (rect.top < 100 && dist < min_dist) {
+                    min_dist = dist;
+                    closest_id = p.id;
+                }
+            });
+            return closest_id;
+        }
 
         function update_reading_progress() {
             set_reading_progress = setInterval(() => {
