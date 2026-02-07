@@ -344,6 +344,7 @@
 
         .library__book_list {
             padding: 0 10px;
+            margin-bottom: 300px;
         }
 
         .author__section {
@@ -351,10 +352,6 @@
             border: 3px solid #000;
             border-radius: 10px;
             box-shadow: 5px 5px 10px #ccc;
-
-            &:last-child {
-                margin-bottom: 250px;
-            }
         }
 
         .author__title {
@@ -453,7 +450,13 @@
             text-align: center;
         }
 
+        .reader__container {
+            width: 100%;
+        }
+
         .reader__book {
+            display: flex;
+            justify-content: center;
             line-height: var(--book-line-height);
             text-align: justify;
             padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
@@ -852,10 +855,10 @@
 
                 books.filter(b => b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search))
                     .forEach(b => {
-                        if (b.favorite) favorites.push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
+                        if (b.favorite) favorites.push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite, read: b.read });
 
                         if (!groups[b.author]) groups[b.author] = [];
-                        groups[b.author].push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite });
+                        groups[b.author].push({ id: b.id, title: b.title, author: b.author, progress: b.progress, favorite: b.favorite, read: b.read });
                     });
 
                 // Recent book
@@ -863,7 +866,7 @@
                 rec.setAttribute("class", "author__section");
                 rec.setAttribute("style", "margin-bottom: 50px;");
 
-                if (recent.title) {
+                if (recent.title && !recent.read) {
                     rec.innerHTML = `
                         <div class="author__title">
                             <span>↪ &nbsp; ${tr("recent")}</span>
@@ -887,7 +890,7 @@
 
                         <div class="book__info">
                             <div class="book__progress" title="${tr("read_title")}">${if_book_reading(recent.progress)}</div>
-                            <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${recent.id}', ${recent.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                            <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${recent.id}', ${recent.favorite}, ${recent.read}, '${row_id}')"><b>&#8942;</b></div>
                         </div>
                     `;
 
@@ -924,8 +927,8 @@
                             </div>
 
                             <div class="book__info">
-                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
-                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress, book.read)}</div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, ${book.read}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -961,9 +964,9 @@
                             <div class="book__title">${book.title}</div>
 
                             <div class="book__info">
-                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress)}</div>
+                                <div class="book__progress" title="${tr("read_title")}">${if_book_reading(book.progress, book.read)}</div>
                                 <div class="book__favorite" title="${tr("favorite_title")}">${if_favorite()}</div>
-                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, '${row_id}')"><b>&#8942;</b></div>
+                                <div class="book__actions_button" title="${tr("book_actions_title")}" onclick="event.stopPropagation(); show_actions_tools('${book.id}', ${book.favorite}, ${book.read}, '${row_id}')"><b>&#8942;</b></div>
                             </div>
                         `;
 
@@ -1302,6 +1305,10 @@
                         book.progress = scrolled.toFixed(0);
                         book.position = book_position;
 
+                        if (scrolled.toFixed(0) >= 100) {
+                            book.read = true;
+                        };
+
                         const updateRequest = store.put(book);
 
                         updateRequest.onsuccess = () => { };
@@ -1317,22 +1324,22 @@
         };
 
         // Indicator of reading progress
-        function if_book_reading(progress_info) {
-            if (progress_info > 0) return progress_info + "%";
-            if (progress_info >= 100) return "✔";
+        function if_book_reading(progress_info = 0, read_info = false) {
+            if (read_info) return "✔";
+            if (progress_info > 0 && progress_info < 100) return progress_info + "%";
             return "";
         };
 
         // Show actions tools
-        function show_actions_tools(book_id, book_favorite, row_id) {
+        function show_actions_tools(book_id, book_favorite, book_read, row_id) {
             active_book = book_id;
             is_actions_tools = true;
             enable_close_zone();
-            add_actions_tools(book_id, book_favorite, row_id);
+            add_actions_tools(book_id, book_favorite, book_read, row_id);
         };
 
         // Add actions tools
-        function add_actions_tools(book_id, book_favorite, row_id) {
+        function add_actions_tools(book_id, book_favorite, book_read, row_id) {
             const row = document.getElementById(row_id);
             const actions_box_id = id_gen();
 
@@ -1347,6 +1354,11 @@
                 <button class="toolbox__button" type="button" 
                     onclick="event.stopPropagation(); toggle_favorite()" >
                     ${book_favorite ? tr("remove_from_favorites") : tr("add_to_favorites")}
+                </button>
+
+                <button class="toolbox__button" type="button"
+                    onclick="event.stopPropagation(); toggle_read()" >
+                    ${book_read ? tr("mark_as_unread") : tr("mark_as_read")}
                 </button>
 
                 <button class="toolbox__button" type="button" 
@@ -1375,6 +1387,34 @@
 
                 if (book) {
                     book.favorite = !book.favorite;
+
+                    const updateRequest = store.put(book);
+
+                    updateRequest.onsuccess = () => {
+                        render_library();
+                    };
+
+                    updateRequest.onerror = (event) => {
+                        window.alert(event.target.error);
+                    };
+                };
+            };
+
+            req.onerror = function (event) { window.alert(event.target.error) };
+        };
+
+        // Toggle read
+        function toggle_read() {
+            const tx = db.transaction(["books"], "readwrite");
+            const store = tx.objectStore("books");
+
+            const req = store.get(active_book);
+
+            req.onsuccess = function () {
+                const book = req.result;
+
+                if (book) {
+                    book.read = !book.read;
 
                     const updateRequest = store.put(book);
 
