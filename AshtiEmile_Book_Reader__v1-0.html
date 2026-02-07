@@ -10,6 +10,8 @@
         :root {
             --interface-background-color: #fff;
             --interface-font-size: 18px;
+            --scrollbar-thumb-height: auto;
+            --scrollbar-progress: 0%;
 
             --book-font-size: 20px;
             --book-line-height: 1.5em;
@@ -29,6 +31,25 @@
             color: #000;
             font-size: 20px;
             font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body::-webkit-scrollbar {
+            width: 10px;
+            color: #fff;
+            background-color: #fff;
+            outline: 1px solid #000;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            height: var(--scrollbar-thumb-height);
+            background-color: #000;
+            cursor: pointer;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: linear-gradient(to bottom,
+                    #000 var(--scrollbar-progress),
+                    #fff var(--scrollbar-progress));
         }
 
         h1,
@@ -155,6 +176,15 @@
             margin-left: 10px;
             font-size: 14px;
             font-weight: 700;
+            cursor: default;
+        }
+
+        .toolbar__progress_indicator {
+            display: none;
+            color: #555;
+            font-size: 14px;
+            padding-right: 10px;
+            border-right: 1px solid #888;
             cursor: default;
         }
 
@@ -442,6 +472,7 @@
         </div>
 
         <div class="toolbar__right_side">
+            <span class="toolbar__progress_indicator" data-toolbar-progress-indicator></span>
             <button class="reload_page_button" type="button" data-reload-page>↻</button>
         </div>
     </div>
@@ -652,10 +683,12 @@
 
 
         // Refs
+        const root_style = document.documentElement.style;
         const library_container = document.querySelector("[data-library-container]");
         const reader_container = document.querySelector("[data-reader-container]");
         const reader_book = document.querySelector("[data-reader-book]");
         const toolbar_title = document.querySelector("[data-toolbar-title]");
+        const toolbar_progress_indicator = document.querySelector("[data-toolbar-progress-indicator]");
         const toolbox_container = document.querySelector("[data-toolbox-container]");
         const toolbox_library_tools = document.querySelector("[data-library-tools]");
         const toolbox_reader_tools = document.querySelector("[data-reader-tools]");
@@ -702,6 +735,7 @@
         function translate_labels() {
             toolbox_toggle_button.title = tr("menu");
             toolbar_title.innerHTML = is_lib_screen ? tr("library") : "Книга";
+            toolbar_progress_indicator.setAttribute("title", tr("read_title"));
             reload_page.setAttribute("title", tr("reload_page"));
             confirm_button.innerHTML = tr("confirm");
             cancel_button.innerHTML = tr("cancel");
@@ -779,6 +813,7 @@
             active_row_actions = false;
             active_book = false;
 
+            toolbar_progress_indicator.style.display = "none";
             library_container.style.display = "block";
 
             const tx = db.transaction("books", "readonly");
@@ -1015,8 +1050,8 @@
                     id: id_gen(4),
                     favorite: false,
                     read: false,
+                    position: false,
                     progress: 0,
-                    position: 0,
                     recent: 0,
                     author: doc.querySelector("h2")?.innerText.trim() || tr("unknown_author"),
                     title: doc.querySelector("h1")?.innerText.trim() || file.name.replace(".html", ""),
@@ -1131,24 +1166,28 @@
             });
 
             if (book) {
-                library_container.style.display = "none";
-                reader_container.style.display = "flex";
-                toolbar_title.innerHTML = `${book.title} — ${book.author}`;
-                reader_book.innerHTML = book.content;
-
-                if (book.position !== 0) {
-                    const recent_paragraph = document.getElementById(book.position);
-                    const recent_paragraph_position = recent_paragraph.getBoundingClientRect().top + window.scrollY;
-                    const offsetPosition = recent_paragraph_position - 30;
-
-                    window.scrollTo({ top: offsetPosition });
-                };
-
                 active_book = id;
                 is_lib_screen = false;
                 toggle_tools();
                 change_recent(id);
                 update_reading_progress();
+
+                library_container.style.display = "none";
+                reader_container.style.display = "flex";
+                toolbar_title.innerHTML = `${book.title} — ${book.author}`;
+                toolbar_progress_indicator.innerHTML = `${book.progress}%`;
+                toolbar_progress_indicator.style.display = "block";
+                reader_book.innerHTML = book.content;
+
+                if (book.position) {
+                    const recent_paragraph = document.getElementById(book.position);
+                    const recent_paragraph_position = recent_paragraph.getBoundingClientRect().top + window.scrollY;
+                    const offset_position = recent_paragraph_position - 30;
+
+                    window.scrollTo({ top: offset_position });
+                } else {
+                    window.scrollTop;
+                };
             };
         };
 
@@ -1178,6 +1217,13 @@
 
         // Update book position
         window.onscroll = () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+
+            toolbar_progress_indicator.innerHTML = scrolled.toFixed(0) + "%";
+            root_style.setProperty("--scrollbar-progress", scrolled.toFixed(0) + "%");
+
             if (!is_lib_screen && active_book) {
                 book_position = get_current_paragraph_id();
             } else {
