@@ -728,8 +728,8 @@
         let active_row_actions = false;
         let active_book = false;
         let library_position = 0;
-        let book_position = 0;
-        let interval_book_position = 0;
+        let book_position = false;
+        let interval_book_position = false;
         let set_reading_progress = () => { };
 
 
@@ -816,6 +816,7 @@
             is_actions_tools = false;
             active_row_actions = false;
             active_book = false;
+            book_position = false;
 
             toolbar_progress_indicator.style.display = "none";
             library_container.style.display = "block";
@@ -981,7 +982,13 @@
         };
 
 
-        // Tracks buttons presses
+        // Events listeners
+        window.addEventListener("resize", () => {
+            if (!is_lib_screen) {
+                scroll_to_paragraph();
+            };
+        });
+
         reload_page.addEventListener("click", () => { location.reload() });
 
         close_zone.addEventListener("click", () => {
@@ -1192,11 +1199,8 @@
                 reader_book.innerHTML = book.content;
 
                 if (book.position) {
-                    const recent_paragraph = document.getElementById(book.position);
-                    const recent_paragraph_position = recent_paragraph.getBoundingClientRect().top + window.scrollY;
-                    const offset_position = recent_paragraph_position - 30;
-
-                    window.scrollTo({ top: offset_position });
+                    book_position = book.position;
+                    scroll_to_paragraph();
                 } else {
                     window.scrollTo(0, 0);
                 };
@@ -1323,6 +1327,14 @@
             }, 1000);
         };
 
+        function scroll_to_paragraph() {
+            const recent_paragraph = document.getElementById(book_position);
+            const recent_paragraph_position = recent_paragraph.getBoundingClientRect().top + window.scrollY;
+            const offset_position = recent_paragraph_position - 30;
+
+            window.scrollTo({ top: offset_position });
+        }
+
         // Indicator of reading progress
         function if_book_reading(progress_info = 0, read_info = false) {
             if (read_info) return "✔";
@@ -1431,7 +1443,7 @@
             req.onerror = function (event) { window.alert(event.target.error) };
         };
 
-        // Rename book nae or author
+        // Rename book name or author
         async function rename_book_content() {
             const book = await new Promise((resolve) => {
                 const tx = db.transaction("books", "readonly");
