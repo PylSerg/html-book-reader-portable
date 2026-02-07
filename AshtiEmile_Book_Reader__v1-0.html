@@ -457,6 +457,7 @@
             line-height: var(--book-line-height);
             text-align: justify;
             padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
+            padding-bottom: 90vh;
         }
     </style>
 </head>
@@ -815,6 +816,8 @@
 
             toolbar_progress_indicator.style.display = "none";
             library_container.style.display = "block";
+            reader_container.style.display = "none";
+            root_style.setProperty("--scrollbar-progress", "0%");
 
             const tx = db.transaction("books", "readonly");
             const store = tx.objectStore("books");
@@ -1042,9 +1045,15 @@
                 const text = await file.text();
                 const doc = new DOMParser().parseFromString(text, "text/html");
 
-                doc.querySelectorAll("p").forEach((p, index) => {
-                    p.id = id_gen();
-                });
+                if (doc.querySelectorAll("p").length > 0) {
+                    doc.querySelectorAll("p").forEach((p, index) => {
+                        p.id = id_gen();
+                    });
+                } else {
+                    doc.querySelectorAll("br").forEach((br, index) => {
+                        br.id = id_gen();
+                    });
+                };
 
                 const bookData = {
                     id: id_gen(4),
@@ -1062,7 +1071,7 @@
                 tx.objectStore("books").put(bookData);
             }
 
-            location.reload();
+            render_library();
         });
 
         clear_library_button.addEventListener("click", () => {
@@ -1186,8 +1195,15 @@
 
                     window.scrollTo({ top: offset_position });
                 } else {
-                    window.scrollTop;
+                    window.scrollTo(0, 0);
                 };
+
+                const winScroll = document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+
+                toolbar_progress_indicator.innerHTML = scrolled.toFixed(0) + "%";
+                root_style.setProperty("--scrollbar-progress", scrolled.toFixed(0) + "%");
             };
         };
 
@@ -1232,19 +1248,35 @@
         };
 
         function get_current_paragraph_id() {
-            const paragraphs = document.querySelectorAll("p");
             let closest_id = null;
             let min_dist = Infinity;
 
-            paragraphs.forEach(p => {
-                const rect = p.getBoundingClientRect();
-                const dist = Math.abs(rect.top);
+            if (document.querySelectorAll("p").length > 0) {
+                const paragraphs = document.querySelectorAll("p");
 
-                if (rect.top < 100 && dist < min_dist) {
-                    min_dist = dist;
-                    closest_id = p.id;
-                }
-            });
+                paragraphs.forEach(p => {
+                    const rect = p.getBoundingClientRect();
+                    const dist = Math.abs(rect.top);
+
+                    if (rect.top < 100 && dist < min_dist) {
+                        min_dist = dist;
+                        closest_id = p.id;
+                    }
+                });
+            } else {
+                const row = document.querySelectorAll("br");
+
+                row.forEach(br => {
+                    const rect = br.getBoundingClientRect();
+                    const dist = Math.abs(rect.top);
+
+                    if (rect.top < 100 && dist < min_dist) {
+                        min_dist = dist;
+                        closest_id = br.id;
+                    }
+                });
+            };
+
             return closest_id;
         }
 
