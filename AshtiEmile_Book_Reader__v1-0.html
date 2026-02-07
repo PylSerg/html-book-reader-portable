@@ -179,19 +179,24 @@
             cursor: default;
         }
 
-        .toolbar__progress_indicator {
-            display: none;
+        .toolbar__progress_indicator,
+        .toolbar__battery_info,
+        .reload_page_button {
             color: #555;
             font-size: 14px;
+        }
+
+        .toolbar__progress_indicator {
+            display: none;
             padding-right: 10px;
             border-right: 1px solid #888;
             cursor: default;
         }
 
+        .toolbar__battery_info {}
+
         .reload_page_button {
             height: 100%;
-            color: #555;
-            font-size: 14px;
             font-weight: 700;
             background-color: var(--interface-background-color);
             border: none;
@@ -477,6 +482,7 @@
 
         <div class="toolbar__right_side">
             <span class="toolbar__progress_indicator" data-toolbar-progress-indicator></span>
+            <span class="toolbar__battery_info" data-toolbar-battery-info></span>
             <button class="reload_page_button" type="button" data-reload-page>↻</button>
         </div>
     </div>
@@ -693,6 +699,7 @@
         const reader_book = document.querySelector("[data-reader-book]");
         const toolbar_title = document.querySelector("[data-toolbar-title]");
         const toolbar_progress_indicator = document.querySelector("[data-toolbar-progress-indicator]");
+        const toolbar_battery_info = document.querySelector("[data-toolbar-battery-info]");
         const toolbox_container = document.querySelector("[data-toolbox-container]");
         const toolbox_library_tools = document.querySelector("[data-library-tools]");
         const toolbox_reader_tools = document.querySelector("[data-reader-tools]");
@@ -730,6 +737,8 @@
         let library_position = 0;
         let book_position = false;
         let interval_book_position = false;
+        let is_battery_charging = false;
+        let battery_level = 0;
         let set_reading_progress = () => { };
 
 
@@ -1511,6 +1520,16 @@
             for (let i = 1; i <= n; i++) { id = id + Math.random().toString(36).substring(2, 10); };
             return id;
         };
+
+        // Intervals
+        setInterval(() => {
+            navigator.getBattery().then((battery) => {
+                battery_level = battery.level;
+                is_battery_charging = battery.charging;
+
+                toolbar_battery_info.innerHTML = `⩀ ${battery.level * 100}%`;
+            });
+        }, 1000);
     </script>
 </body>
 
