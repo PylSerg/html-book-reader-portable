@@ -815,7 +815,17 @@
         const request = indexedDB.open(db_name, 1);
 
 
-        request.onupgradeneeded = function (event) { event.target.result.createObjectStore("books", { keyPath: "id" }); };
+        request.onupgradeneeded = function (event) {
+            const db_init = event.target.result;
+
+            if (!db_init.objectStoreNames.contains("books")) {
+                db_init.createObjectStore("books", { keyPath: "id" });
+            }
+
+            if (!db_init.objectStoreNames.contains("settings")) {
+                db_init.createObjectStore("settings", { keyPath: "key" });
+            }
+        };
         request.onerror = function (event) { window.alert(event.target.error) };
         request.onsuccess = function (event) {
             db = event.target.result;
