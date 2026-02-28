@@ -180,10 +180,12 @@
         }
 
         .toolbar__progress_indicator,
+        .toolbar__time,
         .toolbar__battery_info,
         .reload_page_button {
             color: #555;
             font-size: 14px;
+            cursor: default;
         }
 
         .toolbar__progress_indicator {
@@ -193,7 +195,10 @@
             cursor: default;
         }
 
-        .toolbar__battery_info {}
+        .toolbar__battery_info,
+        .toolbar__time {
+            margin-left: 10px;
+        }
 
         .reload_page_button {
             height: 100%;
@@ -482,6 +487,7 @@
 
         <div class="toolbar__right_side">
             <span class="toolbar__progress_indicator" data-toolbar-progress-indicator></span>
+            <span class="toolbar__time" data-toolbar-time></span>
             <span class="toolbar__battery_info" data-toolbar-battery-info></span>
             <button class="reload_page_button" type="button" data-reload-page>↻</button>
         </div>
@@ -699,6 +705,7 @@
         const reader_book = document.querySelector("[data-reader-book]");
         const toolbar_title = document.querySelector("[data-toolbar-title]");
         const toolbar_progress_indicator = document.querySelector("[data-toolbar-progress-indicator]");
+        const toolbar__time = document.querySelector("[data-toolbar-time]");
         const toolbar_battery_info = document.querySelector("[data-toolbar-battery-info]");
         const toolbox_container = document.querySelector("[data-toolbox-container]");
         const toolbox_library_tools = document.querySelector("[data-library-tools]");
@@ -1524,10 +1531,15 @@
         // Intervals
         setInterval(() => {
             navigator.getBattery().then((battery) => {
+                const date = new Date()
+                const hours = date.getHours() < 10 ? "0" + date.getHours().toString() : date.getHours().toString();
+                const minutes = date.getMinutes() < 10 ? "0" + date.getMinutes().toString() : date.getMinutes().toString();
+
                 battery_level = battery.level;
                 is_battery_charging = battery.charging;
 
-                toolbar_battery_info.innerHTML = `⩀ ${battery.level * 100}%`;
+                toolbar__time.innerHTML = `${hours}:${minutes}`;
+                toolbar_battery_info.innerHTML = `${battery.level * 100}%`;
             });
         }, 1000);
     </script>
