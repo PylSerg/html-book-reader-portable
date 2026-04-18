@@ -156,6 +156,14 @@
             align-items: center;
         }
 
+        .toolbar__right_side {
+            position: absolute;
+            inset-inline-end: 0;
+            padding-top: 2px;
+            padding-left: 10px;
+            background-color: var(--interface-background-color);
+        }
+
         .toolbar__button {
             height: 100%;
             padding: 0 10px;
@@ -178,6 +186,9 @@
             margin-inline-start: 10px;
             font-size: 14px;
             font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             cursor: default;
         }
 
