@@ -750,7 +750,7 @@
 
 
         // Automatic translation for the selected language
-        function tr(label) { return translation[`${label}`][`${lang}`] || translation[`${label}`].en; };
+        function tr(label) { return translation[`${label}`][`${lang}`] || translation[`${label}`]["en-US"]; };
 
         function translate_labels() {
             toolbox_toggle_button.title = tr("menu");
