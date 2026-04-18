@@ -697,6 +697,46 @@
             },
         };
 
+        // Create DB
+        window.indexedDB =
+            window.indexedDB ||
+            window.mozIndexedDB ||
+            window.webkitIndexedDB ||
+            window.msIndexedDB;
+
+        window.IDBTransaction =
+            window.IDBTransaction ||
+            window.webkitIDBTransaction ||
+            window.msIDBTransaction;
+
+        window.IDBKeyRange =
+            window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
+        if (!window.indexedDB) window.alert(tr(no_IndexedDB_message));
+
+        let db;
+        const db_name = "ASHTIEMILE_READER";
+        const request = indexedDB.open(db_name, 1);
+
+
+        request.onupgradeneeded = function (event) {
+            const db_init = event.target.result;
+
+            if (!db_init.objectStoreNames.contains("books")) {
+                db_init.createObjectStore("books", { keyPath: "id" });
+            }
+
+            if (!db_init.objectStoreNames.contains("settings")) {
+                db_init.createObjectStore("settings", { keyPath: "key" });
+            }
+        };
+        request.onerror = function (event) { window.alert(event.target.error) };
+        request.onsuccess = async function (event) {
+            db = event.target.result;
+            await init_language();
+            render_library();
+        };
+
 
         // Refs
         const root_style = document.documentElement.style;
@@ -733,9 +773,8 @@
         const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
 
-
         // Switches
-        let lang = localStorage.getItem("lang") || window.clientInformation.language;
+        let lang;
         let is_lib_screen = true;
         let is_toolbox = false;
         let is_actions_tools = false;
@@ -769,68 +808,36 @@
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
         }
 
-        document.documentElement.setAttribute("lang", lang);
-        translate_labels();
-
-
-        // Creates languages list
-        for (l in translation.language) {
-            const lang_button = document.createElement("button");
-
-            lang_button.setAttribute("class", "toolbox__button");
-            lang_button.setAttribute("value", l);
-            lang_button.setAttribute("onclick", `change_language("${l}")`);
-
-            if (l === lang) {
-                lang_button.textContent = "✓ " + translation.language[l];
-                lang_button.setAttribute("style", "font-weight: bold");
+        async function init_language() {
+            let stored_lang = await get_settings("lang");
+            if (stored_lang) {
+                lang = stored_lang;
             } else {
-                lang_button.textContent = translation.language[l];
+                lang = await set_language();
+            }
+
+            document.documentElement.setAttribute("lang", lang);
+            translate_labels();
+
+            // Creates languages list
+            language_list.innerHTML = "";
+            for (let l in translation.language) {
+                const lang_button = document.createElement("button");
+
+                lang_button.setAttribute("class", "toolbox__button");
+                lang_button.setAttribute("value", l);
+                lang_button.setAttribute("onclick", `change_language("${l}")`);
+
+                if (l === lang) {
+                    lang_button.textContent = "✓ " + translation.language[l];
+                    lang_button.setAttribute("style", "font-weight: bold");
+                } else {
+                    lang_button.textContent = translation.language[l];
+                };
+
+                language_list.appendChild(lang_button);
             };
-
-
-            language_list.appendChild(lang_button);
-        };
-
-
-        // Create DB
-        window.indexedDB =
-            window.indexedDB ||
-            window.mozIndexedDB ||
-            window.webkitIndexedDB ||
-            window.msIndexedDB;
-
-        window.IDBTransaction =
-            window.IDBTransaction ||
-            window.webkitIDBTransaction ||
-            window.msIDBTransaction;
-
-        window.IDBKeyRange =
-            window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-
-        if (!window.indexedDB) window.alert(tr(no_IndexedDB_message));
-
-        let db;
-        const db_name = "ASHTIEMILE_READER";
-        const request = indexedDB.open(db_name, 1);
-
-
-        request.onupgradeneeded = function (event) {
-            const db_init = event.target.result;
-
-            if (!db_init.objectStoreNames.contains("books")) {
-                db_init.createObjectStore("books", { keyPath: "id" });
-            }
-
-            if (!db_init.objectStoreNames.contains("settings")) {
-                db_init.createObjectStore("settings", { keyPath: "key" });
-            }
-        };
-        request.onerror = function (event) { window.alert(event.target.error) };
-        request.onsuccess = function (event) {
-            db = event.target.result;
-            render_library();
-        };
+        }
 
 
         // Render books library
@@ -1525,11 +1532,48 @@
         };
 
         // Changes the language of the program
-        function change_language(lng) {
+        async function change_language(lng) {
             document.documentElement.setAttribute("lang", lng);
-            localStorage.setItem("lang", lng);
+            await set_setting("lang", lng);
             location.reload();
         };
+
+        // Get settings from database
+        async function get_settings(key) {
+            const settings = await new Promise((resolve) => {
+                const tx = db.transaction("settings", "readonly");
+                const store = tx.objectStore("settings");
+                const req = store.get(key);
+
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = function (event) { window.alert(event.target.error) };
+            });
+
+            if (settings) {
+                return settings.value;
+            };
+        };
+
+        // Set settings in database
+        async function set_setting(key, value) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction("settings", "readwrite");
+                const store = tx.objectStore("settings");
+                const req = store.put({ key: key, value: value });
+
+                req.onsuccess = () => resolve();
+                req.onerror = function (event) { 
+                    window.alert(event.target.error); 
+                    reject(event.target.error); 
+                };
+            });
+        }
+
+        async function set_language(l = window.clientInformation.language) {
+            lang = l;
+            await set_setting("lang", lang);
+            return lang;
+        }
 
         // ID generator
         function id_gen(n = 1) {
