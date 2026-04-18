@@ -734,6 +734,8 @@
         request.onsuccess = async function (event) {
             db = event.target.result;
             await init_language();
+            await init_font();
+            await init_paddings();
             render_library();
         };
 
@@ -808,6 +810,7 @@
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
         }
 
+        // Initialize language settings
         async function init_language() {
             let stored_lang = await get_settings("lang");
             if (stored_lang) {
@@ -837,6 +840,31 @@
 
                 language_list.appendChild(lang_button);
             };
+        }
+
+        // Initialize font settings
+        async function init_font() {
+            let stored_font = await get_settings("font");
+
+            if (!stored_font) {
+                stored_font = await set_font();
+            }
+
+            document.body.style.fontFamily = stored_font.family;
+            root_style.setProperty("--book-font-size", `${stored_font.size}px`);
+            root_style.setProperty("--book-line-height", `${stored_font.lineHeight}em`);
+        }
+
+        // Initialize paddings settings
+        async function init_paddings() {
+            let stored_paddings = await get_settings("paddings");
+
+            if (!stored_paddings) {
+                stored_paddings = await set_paddings();
+            }
+
+            root_style.setProperty("--book-horizontal-paddings", `${stored_paddings.horizontal}%`);
+            root_style.setProperty("--book-vertical-paddings", `${stored_paddings.vertical}%`);
         }
 
 
@@ -1562,9 +1590,9 @@
                 const req = store.put({ key: key, value: value });
 
                 req.onsuccess = () => resolve();
-                req.onerror = function (event) { 
-                    window.alert(event.target.error); 
-                    reject(event.target.error); 
+                req.onerror = function (event) {
+                    window.alert(event.target.error);
+                    reject(event.target.error);
                 };
             });
         }
@@ -1573,6 +1601,16 @@
             lang = l;
             await set_setting("lang", lang);
             return lang;
+        }
+
+        async function set_font(f = { size: 20, family: "Arial, Helvetica, sans-serif", lineHeight: 1.5 }) {
+            await set_setting("font", f);
+            return f;
+        }
+
+        async function set_paddings(p = { horizontal: 20, vertical: 2 }) {
+            await set_setting("paddings", p);
+            return p;
         }
 
         // ID generator
