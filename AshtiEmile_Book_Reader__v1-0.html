@@ -13,6 +13,7 @@
             --scrollbar-thumb-height: auto;
             --scrollbar-progress: 0%;
 
+            --book-font-family: Arial, Helvetica, sans-serif;
             --book-font-size: 20px;
             --book-line-height: 1.5em;
             --book-horizontal-paddings: 20%;
@@ -324,6 +325,18 @@
             text-align: center;
         }
 
+        .toolbox__select {
+            padding: 2px 5px;
+            font-size: calc(var(--interface-font-size) - 2px);
+            border: 2px solid #000;
+            border-radius: 5px;
+            background-color: var(--interface-background-color);
+            color: #000;
+            cursor: pointer;
+            outline: none;
+            max-width: 150px;
+        }
+
         .toolbox__main_tools {
             display: flex;
         }
@@ -520,13 +533,17 @@
         }
 
         .reader__book {
-            display: flex;
-            justify-content: center;
+            display: block; /* changed from flex to properly flow text */
+            font-family: var(--book-font-family);
             font-size: var(--book-font-size);
             line-height: var(--book-line-height);
             text-align: justify;
             padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
             padding-bottom: 90vh;
+        }
+
+        .reader__book p {
+            text-indent: 2em;
         }
     </style>
 </head>
@@ -566,6 +583,18 @@
         <div class="toolbox__reader_tools" data-reader-tools>
             <button class="toolbox__button" type="button" data-back-to-library-button></button>
             <button class="toolbox__button" type="button" data-full-screen-button2></button>
+            <div class="toolbox__item">
+                <span data-font-family-label></span>
+                <select class="toolbox__select" data-font-family-select>
+                    <option value="Arial, Helvetica, sans-serif" style="font-family: Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="'Times New Roman', Times, serif" style="font-family: 'Times New Roman', Times, serif">Times New Roman</option>
+                    <option value="'Courier New', Courier, monospace" style="font-family: 'Courier New', Courier, monospace">Courier New</option>
+                    <option value="Georgia, serif" style="font-family: Georgia, serif">Georgia</option>
+                    <option value="Verdana, sans-serif" style="font-family: Verdana, sans-serif">Verdana</option>
+                    <option value="Tahoma, sans-serif" style="font-family: Tahoma, sans-serif">Tahoma</option>
+                    <option value="'Trebuchet MS', sans-serif" style="font-family: 'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                </select>
+            </div>
             <div class="toolbox__item">
                 <span data-font-size-label></span>
                 <div class="toolbox__control_group">
@@ -682,6 +711,11 @@
             font_size: {
                 "en-US": "Font size",
                 "uk-UA": "Розмір шрифту",
+            },
+
+            font_family: {
+                "en-US": "Font family",
+                "uk-UA": "Шрифт",
             },
 
             line_height: {
@@ -907,6 +941,9 @@
         const horizontal_paddings_minus_button = document.querySelector("[data-horizontal-paddings-minus-button]");
         const horizontal_paddings_plus_button = document.querySelector("[data-horizontal-paddings-plus-button]");
 
+        const font_family_label = document.querySelector("[data-font-family-label]");
+        const font_family_select = document.querySelector("[data-font-family-select]");
+
         // Switches
         let lang;
         let is_lib_screen = true;
@@ -941,6 +978,7 @@
             clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
             font_size_label.innerHTML = tr("font_size");
+            font_family_label.innerHTML = tr("font_family");
             line_height_label.innerHTML = tr("line_height");
             vertical_paddings_label.innerHTML = tr("vertical_paddings");
             horizontal_paddings_label.innerHTML = tr("horizontal_paddings");
@@ -986,11 +1024,13 @@
                 stored_font = await set_font();
             }
 
-            document.body.style.fontFamily = stored_font.family;
+            root_style.setProperty("--book-font-family", stored_font.family);
             root_style.setProperty("--book-font-size", `${stored_font.size}px`);
             root_style.setProperty("--book-line-height", `${stored_font.lineHeight}em`);
             font_size_value.innerHTML = stored_font.size;
             line_height_value.innerHTML = stored_font.lineHeight;
+            font_family_select.value = stored_font.family;
+            font_family_select.style.fontFamily = stored_font.family;
         }
 
         // Initialize paddings settings
@@ -1337,6 +1377,13 @@
                 await set_paddings(stored_paddings);
                 init_paddings();
             }
+        });
+
+        font_family_select.addEventListener("change", async (event) => {
+            let stored_font = await get_settings("font");
+            stored_font.family = event.target.value;
+            await set_font(stored_font);
+            init_font();
         });
 
         search_field.addEventListener("input", () => render_library());
