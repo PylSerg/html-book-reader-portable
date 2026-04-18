@@ -282,6 +282,7 @@
             font-size: var(--interface-font-size);
             text-align: left;
             box-sizing: border-box;
+            cursor: default;
 
             &:not(:last-child) {
                 border-bottom: 2px solid #000;
@@ -1186,11 +1187,11 @@
         async function app_reload() {
             clearInterval(set_reading_progress);
             search_field.value = "";
-            
+
             await init_language();
             await init_font();
             await init_paddings();
-            
+
             if (is_lib_screen) {
                 render_library();
                 window.scrollTo(0, 0);
