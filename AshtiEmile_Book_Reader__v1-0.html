@@ -269,6 +269,60 @@
             }
         }
 
+        .toolbox__container .toolbox__item {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            background-color: transparent;
+            border: none;
+            color: #000;
+            font-size: var(--interface-font-size);
+            text-align: left;
+            box-sizing: border-box;
+
+            &:not(:last-child) {
+                border-bottom: 2px solid #000;
+            }
+        }
+
+        .toolbox__container .toolbox__control_group {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 15px;
+            margin-left: 20px;
+        }
+
+        .toolbox__control_btn {
+            background-color: transparent;
+            border: 2px solid #000;
+            border-radius: 5px;
+            color: #000;
+            font-size: var(--interface-font-size);
+            font-weight: bold;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-sizing: border-box;
+
+            &:hover {
+                background-color: #000;
+                color: #fff;
+            }
+        }
+
+        .toolbox__control_val {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
         .toolbox__main_tools {
             display: flex;
         }
@@ -467,6 +521,7 @@
         .reader__book {
             display: flex;
             justify-content: center;
+            font-size: var(--book-font-size);
             line-height: var(--book-line-height);
             text-align: justify;
             padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
@@ -510,6 +565,38 @@
         <div class="toolbox__reader_tools" data-reader-tools>
             <button class="toolbox__button" type="button" data-back-to-library-button></button>
             <button class="toolbox__button" type="button" data-full-screen-button2></button>
+            <div class="toolbox__item">
+                <span data-font-size-label></span>
+                <div class="toolbox__control_group">
+                    <button type="button" class="toolbox__control_btn" data-font-size-minus-button>-</button>
+                    <span class="toolbox__control_val" data-font-size-value></span>
+                    <button type="button" class="toolbox__control_btn" data-font-size-plus-button>+</button>
+                </div>
+            </div>
+            <div class="toolbox__item">
+                <span data-line-height-label></span>
+                <div class="toolbox__control_group">
+                    <button type="button" class="toolbox__control_btn" data-line-height-minus-button>-</button>
+                    <span class="toolbox__control_val" data-line-height-value></span>
+                    <button type="button" class="toolbox__control_btn" data-line-height-plus-button>+</button>
+                </div>
+            </div>
+            <div class="toolbox__item">
+                <span data-vertical-paddings-label></span>
+                <div class="toolbox__control_group">
+                    <button type="button" class="toolbox__control_btn" data-vertical-paddings-minus-button>-</button>
+                    <span class="toolbox__control_val" data-vertical-paddings-value></span>
+                    <button type="button" class="toolbox__control_btn" data-vertical-paddings-plus-button>+</button>
+                </div>
+            </div>
+            <div class="toolbox__item">
+                <span data-horizontal-paddings-label></span>
+                <div class="toolbox__control_group">
+                    <button type="button" class="toolbox__control_btn" data-horizontal-paddings-minus-button>-</button>
+                    <span class="toolbox__control_val" data-horizontal-paddings-value></span>
+                    <button type="button" class="toolbox__control_btn" data-horizontal-paddings-plus-button>+</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -589,6 +676,26 @@
             clear_library: {
                 "en-US": "Clear library",
                 "uk-UA": "Очистити бібліотеку",
+            },
+
+            font_size: {
+                "en-US": "Font size",
+                "uk-UA": "Розмір шрифту",
+            },
+
+            line_height: {
+                "en-US": "Line height",
+                "uk-UA": "Міжрядковий інтервал",
+            },
+
+            vertical_paddings: {
+                "en-US": "Vertical paddings",
+                "uk-UA": "Відступи зверху/знизу",
+            },
+
+            horizontal_paddings: {
+                "en-US": "Horizontal paddings",
+                "uk-UA": "Відступи ліворуч/праворуч",
             },
 
             unknown_author: {
@@ -779,6 +886,25 @@
         const add_book_button = document.querySelector("[data-add-book-button]");
         const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
+        const font_size_label = document.querySelector("[data-font-size-label]");
+        const font_size_value = document.querySelector("[data-font-size-value]");
+        const font_size_minus_button = document.querySelector("[data-font-size-minus-button]");
+        const font_size_plus_button = document.querySelector("[data-font-size-plus-button]");
+
+        const line_height_label = document.querySelector("[data-line-height-label]");
+        const line_height_value = document.querySelector("[data-line-height-value]");
+        const line_height_minus_button = document.querySelector("[data-line-height-minus-button]");
+        const line_height_plus_button = document.querySelector("[data-line-height-plus-button]");
+
+        const vertical_paddings_label = document.querySelector("[data-vertical-paddings-label]");
+        const vertical_paddings_value = document.querySelector("[data-vertical-paddings-value]");
+        const vertical_paddings_minus_button = document.querySelector("[data-vertical-paddings-minus-button]");
+        const vertical_paddings_plus_button = document.querySelector("[data-vertical-paddings-plus-button]");
+
+        const horizontal_paddings_label = document.querySelector("[data-horizontal-paddings-label]");
+        const horizontal_paddings_value = document.querySelector("[data-horizontal-paddings-value]");
+        const horizontal_paddings_minus_button = document.querySelector("[data-horizontal-paddings-minus-button]");
+        const horizontal_paddings_plus_button = document.querySelector("[data-horizontal-paddings-plus-button]");
 
         // Switches
         let lang;
@@ -813,6 +939,10 @@
             add_book_button.innerHTML = tr("add_book");
             clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
+            font_size_label.innerHTML = tr("font_size");
+            line_height_label.innerHTML = tr("line_height");
+            vertical_paddings_label.innerHTML = tr("vertical_paddings");
+            horizontal_paddings_label.innerHTML = tr("horizontal_paddings");
         }
 
         // Initialize language settings
@@ -858,6 +988,8 @@
             document.body.style.fontFamily = stored_font.family;
             root_style.setProperty("--book-font-size", `${stored_font.size}px`);
             root_style.setProperty("--book-line-height", `${stored_font.lineHeight}em`);
+            font_size_value.innerHTML = stored_font.size;
+            line_height_value.innerHTML = stored_font.lineHeight;
         }
 
         // Initialize paddings settings
@@ -870,6 +1002,8 @@
 
             root_style.setProperty("--book-horizontal-paddings", `${stored_paddings.horizontal}%`);
             root_style.setProperty("--book-vertical-paddings", `${stored_paddings.vertical}%`);
+            vertical_paddings_value.innerHTML = stored_paddings.vertical;
+            horizontal_paddings_value.innerHTML = stored_paddings.horizontal;
         }
 
 
@@ -1095,10 +1229,10 @@
         // Toggle fullscreen wrapper
         function toggle_fullscreen() {
             if (!is_fullscreen()) {
-                document.documentElement.requestFullscreen().catch(() => {});
+                document.documentElement.requestFullscreen().catch(() => { });
             } else {
                 if (document.fullscreenElement) {
-                    document.exitFullscreen().catch(() => {});
+                    document.exitFullscreen().catch(() => { });
                 } else {
                     window.alert(tr("f11_exit_message"));
                 }
@@ -1113,6 +1247,78 @@
         full_screen_button2.addEventListener("click", () => {
             close_toolbox();
             toggle_fullscreen();
+        });
+
+        font_size_minus_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            if (stored_font.size > 10) {
+                stored_font.size -= 1;
+                await set_font(stored_font);
+                init_font();
+            }
+        });
+
+        font_size_plus_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            if (stored_font.size < 60) {
+                stored_font.size += 1;
+                await set_font(stored_font);
+                init_font();
+            }
+        });
+
+        line_height_minus_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            if (stored_font.lineHeight > 1.0) {
+                stored_font.lineHeight = parseFloat((stored_font.lineHeight - 0.1).toFixed(1));
+                await set_font(stored_font);
+                init_font();
+            }
+        });
+
+        line_height_plus_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            if (stored_font.lineHeight < 3.0) {
+                stored_font.lineHeight = parseFloat((stored_font.lineHeight + 0.1).toFixed(1));
+                await set_font(stored_font);
+                init_font();
+            }
+        });
+
+        vertical_paddings_minus_button.addEventListener("click", async () => {
+            let stored_paddings = await get_settings("paddings");
+            if (stored_paddings.vertical > 0) {
+                stored_paddings.vertical -= 1;
+                await set_paddings(stored_paddings);
+                init_paddings();
+            }
+        });
+
+        vertical_paddings_plus_button.addEventListener("click", async () => {
+            let stored_paddings = await get_settings("paddings");
+            if (stored_paddings.vertical < 20) {
+                stored_paddings.vertical += 1;
+                await set_paddings(stored_paddings);
+                init_paddings();
+            }
+        });
+
+        horizontal_paddings_minus_button.addEventListener("click", async () => {
+            let stored_paddings = await get_settings("paddings");
+            if (stored_paddings.horizontal > 0) {
+                stored_paddings.horizontal -= 1;
+                await set_paddings(stored_paddings);
+                init_paddings();
+            }
+        });
+
+        horizontal_paddings_plus_button.addEventListener("click", async () => {
+            let stored_paddings = await get_settings("paddings");
+            if (stored_paddings.horizontal < 40) {
+                stored_paddings.horizontal += 1;
+                await set_paddings(stored_paddings);
+                init_paddings();
+            }
         });
 
         search_field.addEventListener("input", () => render_library());
