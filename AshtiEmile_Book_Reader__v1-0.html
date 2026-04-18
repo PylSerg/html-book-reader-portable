@@ -15,6 +15,8 @@
 
             --book-font-family: Arial, Helvetica, sans-serif;
             --book-font-size: 20px;
+            --book-font-weight: normal;
+            --book-font-style: normal;
             --book-line-height: 1.5em;
             --book-horizontal-paddings: 20%;
             --book-vertical-paddings: 2%;
@@ -325,6 +327,27 @@
             text-align: center;
         }
 
+        .toolbox__control_toggle {
+            background-color: transparent;
+            border: 2px solid #000;
+            border-radius: 5px;
+            color: #000;
+            font-size: var(--interface-font-size);
+            font-weight: bold;
+            height: 30px;
+            padding: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-sizing: border-box;
+
+            &:hover, &.active {
+                background-color: #000;
+                color: #fff;
+            }
+        }
+
         .toolbox__select {
             padding: 2px 5px;
             font-size: calc(var(--interface-font-size) - 2px);
@@ -536,6 +559,8 @@
             display: block; /* changed from flex to properly flow text */
             font-family: var(--book-font-family);
             font-size: var(--book-font-size);
+            font-weight: var(--book-font-weight);
+            font-style: var(--book-font-style);
             line-height: var(--book-line-height);
             text-align: justify;
             padding: var(--book-vertical-paddings) var(--book-horizontal-paddings);
@@ -594,6 +619,13 @@
                     <option value="Tahoma, sans-serif" style="font-family: Tahoma, sans-serif">Tahoma</option>
                     <option value="'Trebuchet MS', sans-serif" style="font-family: 'Trebuchet MS', sans-serif">Trebuchet MS</option>
                 </select>
+            </div>
+            <div class="toolbox__item">
+                <span data-font-style-label></span>
+                <div class="toolbox__control_group">
+                    <button type="button" class="toolbox__control_toggle" data-font-weight-button>B</button>
+                    <button type="button" class="toolbox__control_toggle" data-font-style-button style="font-style: italic">I</button>
+                </div>
             </div>
             <div class="toolbox__item">
                 <span data-font-size-label></span>
@@ -716,6 +748,21 @@
             font_family: {
                 "en-US": "Font family",
                 "uk-UA": "Шрифт",
+            },
+
+            font_style: {
+                "en-US": "Font style",
+                "uk-UA": "Стиль шрифту",
+            },
+
+            font_weight_bold: {
+                "en-US": "Bold",
+                "uk-UA": "Жирний",
+            },
+
+            font_style_italic: {
+                "en-US": "Italic",
+                "uk-UA": "Курсив",
             },
 
             line_height: {
@@ -944,6 +991,10 @@
         const font_family_label = document.querySelector("[data-font-family-label]");
         const font_family_select = document.querySelector("[data-font-family-select]");
 
+        const font_style_label = document.querySelector("[data-font-style-label]");
+        const font_weight_button = document.querySelector("[data-font-weight-button]");
+        const font_style_button = document.querySelector("[data-font-style-button]");
+
         // Switches
         let lang;
         let is_lib_screen = true;
@@ -979,6 +1030,9 @@
             language_button.innerHTML = `<span>${tr("language")}</span> <span>></span>`;
             font_size_label.innerHTML = tr("font_size");
             font_family_label.innerHTML = tr("font_family");
+            font_style_label.innerHTML = tr("font_style");
+            font_weight_button.innerHTML = tr("font_weight_bold");
+            font_style_button.innerHTML = tr("font_style_italic");
             line_height_label.innerHTML = tr("line_height");
             vertical_paddings_label.innerHTML = tr("vertical_paddings");
             horizontal_paddings_label.innerHTML = tr("horizontal_paddings");
@@ -1024,13 +1078,31 @@
                 stored_font = await set_font();
             }
 
+            // Defaults if missing
+            stored_font.weight = stored_font.weight || "normal";
+            stored_font.style = stored_font.style || "normal";
+
             root_style.setProperty("--book-font-family", stored_font.family);
             root_style.setProperty("--book-font-size", `${stored_font.size}px`);
+            root_style.setProperty("--book-font-weight", stored_font.weight);
+            root_style.setProperty("--book-font-style", stored_font.style);
             root_style.setProperty("--book-line-height", `${stored_font.lineHeight}em`);
             font_size_value.innerHTML = stored_font.size;
             line_height_value.innerHTML = stored_font.lineHeight;
             font_family_select.value = stored_font.family;
             font_family_select.style.fontFamily = stored_font.family;
+
+            if (stored_font.weight === "bold") {
+                font_weight_button.classList.add("active");
+            } else {
+                font_weight_button.classList.remove("active");
+            }
+
+            if (stored_font.style === "italic") {
+                font_style_button.classList.add("active");
+            } else {
+                font_style_button.classList.remove("active");
+            }
         }
 
         // Initialize paddings settings
@@ -1382,6 +1454,20 @@
         font_family_select.addEventListener("change", async (event) => {
             let stored_font = await get_settings("font");
             stored_font.family = event.target.value;
+            await set_font(stored_font);
+            init_font();
+        });
+
+        font_weight_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            stored_font.weight = stored_font.weight === "bold" ? "normal" : "bold";
+            await set_font(stored_font);
+            init_font();
+        });
+
+        font_style_button.addEventListener("click", async () => {
+            let stored_font = await get_settings("font");
+            stored_font.style = stored_font.style === "italic" ? "normal" : "italic";
             await set_font(stored_font);
             init_font();
         });
@@ -1887,7 +1973,7 @@
             return lang;
         }
 
-        async function set_font(f = { size: 20, family: "Arial, Helvetica, sans-serif", lineHeight: 1.5 }) {
+        async function set_font(f = { size: 20, family: "Arial, Helvetica, sans-serif", weight: "normal", style: "normal", lineHeight: 1.5 }) {
             await set_setting("font", f);
             return f;
         }
