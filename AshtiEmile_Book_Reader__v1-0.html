@@ -691,6 +691,11 @@
                 "uk-UA": "Ви дійсно хочете видалити УСІ книги з бібліотеки?",
             },
 
+            f11_exit_message: {
+                "en-US": "Please press F11 again to exit full screen mode.",
+                "uk-UA": "Будь ласка, натисніть F11, щоб вийти з повноекранного режиму.",
+            },
+
             no_IndexedDB_message: {
                 "en-US": "Your browser doesn't support the stable version of IndexedDB. Some features will be unavailable.",
                 "uk-UA": "Ваш браузер не підтримує стабільну версію IndexedDB. Деякі функції будуть недоступні.",
@@ -1067,7 +1072,7 @@
             language_list.style.display = "none";
             toolbox_main_tools.style.display = "flex";
 
-            if (!document.fullscreenElement) {
+            if (!is_fullscreen()) {
                 full_screen_button.textContent = tr("full_screen");
                 full_screen_button2.textContent = tr("full_screen");
             } else {
@@ -1082,24 +1087,32 @@
             };
         });
 
+        // Check if window is in fullscreen
+        function is_fullscreen() {
+            return document.fullscreenElement != null || window.innerHeight === window.screen.height;
+        }
+
+        // Toggle fullscreen wrapper
+        function toggle_fullscreen() {
+            if (!is_fullscreen()) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                } else {
+                    window.alert(tr("f11_exit_message"));
+                }
+            }
+        }
+
         full_screen_button.addEventListener("click", () => {
             close_toolbox();
-
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            };
+            toggle_fullscreen();
         });
 
         full_screen_button2.addEventListener("click", () => {
             close_toolbox();
-
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            };
+            toggle_fullscreen();
         });
 
         search_field.addEventListener("input", () => render_library());
