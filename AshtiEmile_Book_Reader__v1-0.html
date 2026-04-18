@@ -1182,6 +1182,23 @@
         };
 
 
+        // Soft reload the application to keep Fullscreen mode active
+        async function app_reload() {
+            clearInterval(set_reading_progress);
+            search_field.value = "";
+            
+            await init_language();
+            await init_font();
+            await init_paddings();
+            
+            if (is_lib_screen) {
+                render_library();
+                window.scrollTo(0, 0);
+            } else {
+                open_book(active_book);
+            }
+        }
+
         // Events listeners
         window.addEventListener("resize", () => {
             if (!is_lib_screen) {
@@ -1189,7 +1206,7 @@
             };
         });
 
-        reload_page.addEventListener("click", () => { location.reload() });
+        reload_page.addEventListener("click", () => { app_reload() });
 
         close_zone.addEventListener("click", () => {
             if (is_toolbox) close_toolbox();
@@ -1451,7 +1468,7 @@
         function clear_library() {
             db.transaction("books", "readwrite").objectStore("books").clear();
             reset_dialog_window();
-            location.reload();
+            app_reload();
         };
 
         // Open selected book
@@ -1782,7 +1799,7 @@
         async function change_language(lng) {
             document.documentElement.setAttribute("lang", lng);
             await set_setting("lang", lng);
-            location.reload();
+            app_reload();
         };
 
         // Get settings from database
