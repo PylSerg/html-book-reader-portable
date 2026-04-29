@@ -4151,7 +4151,6 @@
             dialog_window_text.innerHTML = content;
             dialog_window.style.display = "flex";
             confirm_button.setAttribute("onclick", fn);
-            document.body.classList.add("scroll_lock");
         };
 
         // Reset dialog window
@@ -4375,7 +4374,6 @@
             active_book = book_id;
             is_actions_tools = true;
             enable_close_zone();
-            document.body.classList.add("scroll_lock");
             add_actions_tools(book_id, book_favorite, book_read, row_id);
         };
 
