@@ -627,14 +627,14 @@
             <div class="toolbox__item">
                 <span data-font-family-label></span>
                 <select class="toolbox__select" data-font-family-select>
-                    <!-- options dynamically generated -->
                 </select>
             </div>
             <div class="toolbox__item">
                 <span data-font-style-label></span>
                 <div class="toolbox__control_group">
                     <button type="button" class="toolbox__control_toggle" data-font-weight-button>B</button>
-                    <button type="button" class="toolbox__control_toggle" data-font-style-button style="font-style: italic">I</button>
+                    <button type="button" class="toolbox__control_toggle" data-font-style-button
+                        style="font-style: italic">I</button>
                 </div>
             </div>
             <div class="toolbox__item">
@@ -3403,10 +3403,10 @@
 
         // Google Fonts logic
         const googleFonts = [
-            "Google Sans", "Roboto", "Roboto Condensed", "Roboto Mono", "Roboto Serif", 
-            "Nunito", "Playfair Display", "Merriweather", "Lora", "Cormorant Garamond", 
-            "JetBrains Mono", "Pacifico", "Caveat", "Lobster", "Comfortaa", "IBM Plex Mono", 
-            "IBM Plex Serif", "Noto Sans Mono", "Bad Script", "Lilex", "Martian Mono", 
+            "Google Sans", "Roboto", "Roboto Condensed", "Roboto Mono", "Roboto Serif",
+            "Nunito", "Playfair Display", "Merriweather", "Lora", "Cormorant Garamond",
+            "JetBrains Mono", "Pacifico", "Caveat", "Lobster", "Comfortaa", "IBM Plex Mono",
+            "IBM Plex Serif", "Noto Sans Mono", "Bad Script", "Lilex", "Martian Mono",
             "Comforter", "Comforter Brush", "LXGW WenKai Mono TC", "Ponomar", "Great Vibes"
         ];
 
@@ -3434,7 +3434,7 @@
 
         async function update_font_list() {
             let options = [...baseFonts];
-            
+
             if (navigator.onLine) {
                 loadGoogleFonts();
                 const gfOptions = googleFonts.map(font => ({
@@ -3443,12 +3443,12 @@
                 }));
                 options = options.concat(gfOptions);
             }
-            
+
             options.sort((a, b) => a.name.localeCompare(b.name));
-            
+
             const currentVal = font_family_select.value;
             font_family_select.innerHTML = '';
-            
+
             options.forEach(opt => {
                 const optionEl = document.createElement('option');
                 optionEl.value = opt.value;
@@ -3456,7 +3456,7 @@
                 optionEl.style.fontFamily = opt.value;
                 font_family_select.appendChild(optionEl);
             });
-            
+
             let stored_font = await get_settings("font");
             if (stored_font && stored_font.family) {
                 // If stored font is not in options, it might be a google font and we went offline.
