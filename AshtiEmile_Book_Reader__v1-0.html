@@ -627,13 +627,7 @@
             <div class="toolbox__item">
                 <span data-font-family-label></span>
                 <select class="toolbox__select" data-font-family-select>
-                    <option value="Arial, Helvetica, sans-serif" style="font-family: Arial, Helvetica, sans-serif">Arial</option>
-                    <option value="'Times New Roman', Times, serif" style="font-family: 'Times New Roman', Times, serif">Times New Roman</option>
-                    <option value="'Courier New', Courier, monospace" style="font-family: 'Courier New', Courier, monospace">Courier New</option>
-                    <option value="Georgia, serif" style="font-family: Georgia, serif">Georgia</option>
-                    <option value="Verdana, sans-serif" style="font-family: Verdana, sans-serif">Verdana</option>
-                    <option value="Tahoma, sans-serif" style="font-family: Tahoma, sans-serif">Tahoma</option>
-                    <option value="'Trebuchet MS', sans-serif" style="font-family: 'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                    <!-- options dynamically generated -->
                 </select>
             </div>
             <div class="toolbox__item">
@@ -3343,6 +3337,7 @@
         request.onsuccess = async function (event) {
             db = event.target.result;
             await init_language();
+            await update_font_list();
             await init_font();
             await init_paddings();
             render_library();
@@ -3405,6 +3400,75 @@
 
         const font_family_label = document.querySelector("[data-font-family-label]");
         const font_family_select = document.querySelector("[data-font-family-select]");
+
+        // Google Fonts logic
+        const googleFonts = [
+            "Google Sans", "Roboto", "Roboto Condensed", "Roboto Mono", "Roboto Serif", 
+            "Nunito", "Playfair Display", "Merriweather", "Lora", "Cormorant Garamond", 
+            "JetBrains Mono", "Pacifico", "Caveat", "Lobster", "Comfortaa", "IBM Plex Mono", 
+            "IBM Plex Serif", "Noto Sans Mono", "Bad Script", "Lilex", "Martian Mono", 
+            "Comforter", "Comforter Brush", "LXGW WenKai Mono TC", "Ponomar", "Great Vibes"
+        ];
+
+        const baseFonts = [
+            { name: "Arial", value: "Arial, Helvetica, sans-serif" },
+            { name: "Courier New", value: "'Courier New', Courier, monospace" },
+            { name: "Georgia", value: "Georgia, serif" },
+            { name: "Tahoma", value: "Tahoma, sans-serif" },
+            { name: "Times New Roman", value: "'Times New Roman', Times, serif" },
+            { name: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+            { name: "Verdana", value: "Verdana, sans-serif" }
+        ];
+
+        let googleFontsLoaded = false;
+
+        function loadGoogleFonts() {
+            if (googleFontsLoaded) return;
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            const families = googleFonts.map(font => font.replace(/ /g, '+')).join('&family=');
+            link.href = `https://fonts.googleapis.com/css2?family=${families}&display=swap`;
+            document.head.appendChild(link);
+            googleFontsLoaded = true;
+        }
+
+        async function update_font_list() {
+            let options = [...baseFonts];
+            
+            if (navigator.onLine) {
+                loadGoogleFonts();
+                const gfOptions = googleFonts.map(font => ({
+                    name: font,
+                    value: `"${font}", sans-serif`
+                }));
+                options = options.concat(gfOptions);
+            }
+            
+            options.sort((a, b) => a.name.localeCompare(b.name));
+            
+            const currentVal = font_family_select.value;
+            font_family_select.innerHTML = '';
+            
+            options.forEach(opt => {
+                const optionEl = document.createElement('option');
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.name;
+                optionEl.style.fontFamily = opt.value;
+                font_family_select.appendChild(optionEl);
+            });
+            
+            let stored_font = await get_settings("font");
+            if (stored_font && stored_font.family) {
+                // If stored font is not in options, it might be a google font and we went offline.
+                // It will just revert to the first option, which is fine.
+                font_family_select.value = stored_font.family;
+            } else if (currentVal) {
+                font_family_select.value = currentVal;
+            }
+        }
+
+        window.addEventListener('online', update_font_list);
+        window.addEventListener('offline', update_font_list);
 
         const font_style_label = document.querySelector("[data-font-style-label]");
         const font_weight_button = document.querySelector("[data-font-weight-button]");
