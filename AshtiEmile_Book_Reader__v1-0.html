@@ -3915,10 +3915,8 @@
 
             if (is_toolbox) {
                 enable_close_zone();
-                document.body.classList.add("scroll_lock");
             } else {
                 disable_close_zone();
-                document.body.classList.remove("scroll_lock");
             };
         });
 
@@ -4161,7 +4159,6 @@
             dialog_window.style.display = "none";
             dialog_window_text.innerHTML = "";
             confirm_button.removeAttribute("onclick");
-            document.body.classList.remove("scroll_lock");
         };
 
         // Close toolbox
@@ -4169,7 +4166,6 @@
             is_toolbox = false;
             toolbox_container.style.display = "none";
             disable_close_zone();
-            document.body.classList.remove("scroll_lock");
         };
 
         // Toggle tools
@@ -4189,7 +4185,6 @@
             is_actions_tools = false;
             active_row_actions = false;
             disable_close_zone();
-            document.body.classList.remove("scroll_lock");
         };
 
         // Delete all books in library
