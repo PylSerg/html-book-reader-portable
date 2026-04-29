@@ -8,7 +8,7 @@
 
     <style>
         :root {
-            --interface-background-color: #fff;
+            --interface-background-color: var(--book-background);
             --interface-font-size: 18px;
             --scrollbar-thumb-height: auto;
             --scrollbar-progress: 0%;
@@ -20,7 +20,46 @@
             --book-line-height: 1.5em;
             --book-horizontal-paddings: 20%;
             --book-vertical-paddings: 2%;
+            --book-color: #000000;
+            --book-background: #ffffff;
         }
+
+        *::-webkit-scrollbar {
+            width: 12px;
+            background-color: transparent;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: var(--book-color);
+            border-radius: 10px;
+            border: 3px solid var(--book-background);
+        }
+
+        *::-webkit-scrollbar-track {
+            background-color: transparent;
+        }
+
+        body::-webkit-scrollbar {
+            width: 10px;
+            color: var(--book-background);
+            background-color: var(--book-background);
+            outline: 1px solid var(--book-color);
+        }
+
+        body::-webkit-scrollbar-thumb {
+            height: var(--scrollbar-thumb-height);
+            background-color: var(--book-color);
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: linear-gradient(to bottom,
+                    var(--book-color) var(--scrollbar-progress),
+                    var(--book-background) var(--scrollbar-progress));
+        }
+
 
         body {
             display: flex;
@@ -29,29 +68,10 @@
             margin-inline: 0px;
             margin-top: 20px;
             margin-bottom: 0px;
-            background-color: var(--interface-background-color);
-            color: #000;
+            background-color: var(--book-background);
+            color: var(--book-color);
             font-size: 20px;
             font-family: Arial, Helvetica, sans-serif;
-        }
-
-        body::-webkit-scrollbar {
-            width: 10px;
-            color: #fff;
-            background-color: #fff;
-            outline: 1px solid #000;
-        }
-
-        body::-webkit-scrollbar-thumb {
-            height: var(--scrollbar-thumb-height);
-            background-color: #000;
-            cursor: pointer;
-        }
-
-        body::-webkit-scrollbar-track {
-            background: linear-gradient(to bottom,
-                    #000 var(--scrollbar-progress),
-                    #fff var(--scrollbar-progress));
         }
 
         h1,
@@ -85,8 +105,9 @@
             justify-content: center;
             align-items: center;
             margin: 10px;
-            background-color: var(--interface-background-color);
-            border: 3px solid #000;
+            background-color: var(--book-background);
+            color: var(--book-color);
+            border: 3px solid var(--book-color);
             border-radius: 10px;
             overflow: hidden;
         }
@@ -102,24 +123,25 @@
             justify-content: center;
             width: 100%;
             margin-top: 20px;
-            border-top: 1px solid #000;
+            border-top: 1px solid var(--book-color);
         }
 
         .dialog_window__button {
             width: 50%;
             padding: 10px;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             background: var(--interface-background-color);
             border: none;
             cursor: pointer;
 
             &:not(:last-child) {
-                border-inline-end: 1px solid #000;
+                border-inline-end: 1px solid var(--book-color);
             }
 
             &:hover {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
@@ -144,7 +166,7 @@
             justify-content: space-between;
             width: 100%;
             height: 20px;
-            border-bottom: 1px solid #000;
+            border-bottom: 1px solid var(--book-color);
             background-color: var(--interface-background-color);
             z-index: 999;
         }
@@ -171,15 +193,15 @@
             background-color: transparent;
             border: 2px solid transparent;
             border: none;
-            color: #000;
+            color: var(--book-color);
             font-size: 18px;
             font-weight: 700;
             text-align: center;
             cursor: pointer;
 
             &:hover {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
@@ -197,7 +219,7 @@
         .toolbar__time,
         .toolbar__battery_info,
         .reload_page_button {
-            color: #555;
+            color: var(--book-color);
             font-size: 14px;
             cursor: default;
         }
@@ -205,7 +227,8 @@
         .toolbar__progress_indicator {
             display: none;
             padding-inline-end: 10px;
-            border-inline-end: 1px solid #888;
+            border-inline-end: 1px solid var(--book-color);
+            ;
             cursor: default;
         }
 
@@ -224,8 +247,8 @@
             cursor: pointer;
 
             &:hover {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
@@ -237,10 +260,10 @@
             max-height: 70vh;
             padding: 5px;
             background-color: var(--interface-background-color);
-            border: 3px solid #000;
+            border: 3px solid var(--book-color);
             border-radius: 10px;
-            box-shadow: 5px 5px 10px #555;
             overflow: auto;
+            overflow-x: hidden;
             z-index: 1001;
 
             & div {
@@ -260,19 +283,19 @@
             background-color: transparent;
             border: 2px solid transparent;
             border: none;
-            color: #000;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             text-align: start;
             cursor: pointer;
 
             &:not(:last-child) {
-                border-bottom: 2px solid #000;
+                border-bottom: 2px solid var(--book-color);
             }
         }
 
         .toolbox__button:hover {
-            color: #fff;
-            background-color: #000;
+            color: var(--book-background);
+            background-color: var(--book-color);
 
             &:first-child {
                 border-radius: 5px 5px 0 0;
@@ -292,14 +315,14 @@
             padding: 20px;
             background-color: transparent;
             border: none;
-            color: #000;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             text-align: start;
             box-sizing: border-box;
             cursor: default;
 
             &:not(:last-child) {
-                border-bottom: 2px solid #000;
+                border-bottom: 2px solid var(--book-color);
             }
         }
 
@@ -313,9 +336,9 @@
 
         .toolbox__control_btn {
             background-color: transparent;
-            border: 2px solid #000;
+            border: 2px solid var(--book-color);
             border-radius: 5px;
-            color: #000;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             font-weight: bold;
             width: 30px;
@@ -327,8 +350,8 @@
             box-sizing: border-box;
 
             &:hover {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
@@ -340,9 +363,9 @@
 
         .toolbox__control_toggle {
             background-color: transparent;
-            border: 2px solid #000;
+            border: 2px solid var(--book-color);
             border-radius: 5px;
-            color: #000;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             font-weight: bold;
             height: 30px;
@@ -355,21 +378,31 @@
 
             &:hover,
             &.active {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
         .toolbox__select {
             padding: 2px 5px;
             font-size: calc(var(--interface-font-size) - 2px);
-            border: 2px solid #000;
+            border: 2px solid var(--book-color);
             border-radius: 5px;
             background-color: var(--interface-background-color);
-            color: #000;
+            color: var(--book-color);
             cursor: pointer;
             outline: none;
             max-width: 150px;
+        }
+
+        .toolbox__color_input {
+            width: 40px;
+            height: 30px;
+            padding: 0;
+            border: 2px solid var(--book-color);
+            border-radius: 5px;
+            background: none;
+            cursor: pointer;
         }
 
         .toolbox__main_tools {
@@ -397,7 +430,7 @@
             width: 100%;
             margin-top: 10px;
             margin-bottom: 30px;
-            border-bottom: 1px solid #aaa;
+            border-bottom: 1px solid var(--book-color);
         }
 
         .search_field {
@@ -408,9 +441,12 @@
             border: none;
             font-size: var(--interface-font-size);
             font-style: italic;
+            background-color: var(--book-background);
+            color: var(--book-color);
 
             &::placeholder {
-                color: #aaa;
+                color: var(--book-color);
+                ;
                 font-style: italic;
             }
 
@@ -429,16 +465,16 @@
             inset-inline-end: 0;
             margin: 0;
             padding: 1px 10px;
-            color: #aaa;
+            color: var(--book-color);
             font-size: var(--interface-font-size);
             font-weight: bold;
-            background-color: var(--interface-background-color);
+            background-color: var(--book-background);
             border: none;
             cursor: pointer;
 
             &:hover {
-                background-color: #000;
-                color: #fff;
+                background-color: var(--book-color);
+                color: var(--book-background);
             }
         }
 
@@ -451,7 +487,7 @@
             margin-top: 50px;
             width: 100%;
             height: 100%;
-            color: #888;
+            color: var(--book-color);
             font-style: italic;
         }
 
@@ -462,9 +498,8 @@
 
         .author__section {
             margin-bottom: 30px;
-            border: 3px solid #000;
+            border: 3px solid var(--book-color);
             border-radius: 10px;
-            box-shadow: 5px 5px 10px #ccc;
         }
 
         .author__title {
@@ -473,16 +508,16 @@
             justify-content: space-between;
             margin-bottom: 0px;
             padding: 10px;
-            background-color: #eee;
+            background-color: var(--book-background);
             font-weight: bold;
-            border-bottom: 3px solid #000;
+            border-bottom: 3px solid var(--book-color);
             border-radius: 10px 10px 0 0;
             cursor: default;
         }
 
         .author__counter {
             margin-inline-start: 10px;
-            color: #777;
+            color: var(--book-color);
             cursor: default;
         }
 
@@ -495,13 +530,10 @@
             cursor: pointer;
 
             &:not(:last-child) {
-                border-bottom: 1px solid #333;
+                border-bottom: 1px solid var(--book-color);
             }
 
-            &:hover {
-                background-color: #000;
-                color: #fff;
-            }
+
         }
 
         .book__info {
@@ -514,7 +546,7 @@
 
         .book__progress {
             margin-inline-start: 50px;
-            color: #888;
+            color: var(--book-color);
             font-style: italic;
         }
 
@@ -524,7 +556,7 @@
 
             &:hover {
                 background-color: var(--interface-background-color);
-                color: #000;
+                color: var(--book-color);
             }
         }
 
@@ -537,10 +569,10 @@
             max-height: 70vh;
             padding: 5px;
             background-color: var(--interface-background-color);
-            border: 3px solid #000;
+            border: 3px solid var(--book-color);
             border-radius: 10px;
-            box-shadow: -5px 5px 10px #555;
             overflow: auto;
+            overflow-x: hidden;
             z-index: 1001;
         }
 
@@ -554,7 +586,8 @@
             margin-bottom: 30px;
             font-size: var(--book-font-size);
             border: none;
-            border-bottom: 2px solid #aaa;
+            border-bottom: 2px solid var(--book-color);
+            background-color: var(--interface-background-color);
             outline: none;
         }
 
@@ -581,10 +614,16 @@
             -webkit-hyphens: auto;
             -ms-hyphens: auto;
             overflow-wrap: break-word;
+            color: var(--book-color);
+            background-color: var(--book-background);
         }
 
         .reader__book p {
             text-indent: 2em;
+        }
+
+        .scroll_lock {
+            overflow: hidden !important;
         }
     </style>
 </head>
@@ -669,6 +708,15 @@
                     <button type="button" class="toolbox__control_btn" data-horizontal-paddings-plus-button>+</button>
                 </div>
             </div>
+            <div class="toolbox__item">
+                <span data-font-color-label></span>
+                <input type="color" class="toolbox__color_input" data-font-color-input>
+            </div>
+            <div class="toolbox__item">
+                <span data-background-color-label></span>
+                <input type="color" class="toolbox__color_input" data-background-color-input>
+            </div>
+            <button class="toolbox__button" type="button" data-reset-settings-button></button>
         </div>
     </div>
 
@@ -1349,6 +1397,16 @@
 
             },
 
+            reset_settings: {
+                "en-US": "Reset settings",
+                "uk-UA": "Скинути налаштування",
+            },
+
+            reset_settings_question: {
+                "en-US": "Are you sure you want to reset all reader settings to default?",
+                "uk-UA": "Ви впевнені, що хочете скинути всі налаштування рідера до початкових?",
+            },
+
             font_size: {
                 "ar": "حجم الخط",
                 "az": "Şrift ölçüsü",
@@ -1607,6 +1665,16 @@
                 "zh-TW": "粗體",
 
 
+            },
+
+            font_color: {
+                "en-US": "Font color",
+                "uk-UA": "Колір шрифту",
+            },
+
+            background_color: {
+                "en-US": "Background color",
+                "uk-UA": "Колір фону",
             },
 
             font_style_italic: {
@@ -3401,6 +3469,13 @@
         const font_family_label = document.querySelector("[data-font-family-label]");
         const font_family_select = document.querySelector("[data-font-family-select]");
 
+        const font_color_label = document.querySelector("[data-font-color-label]");
+        const font_color_input = document.querySelector("[data-font-color-input]");
+        const background_color_label = document.querySelector("[data-background-color-label]");
+        const background_color_input = document.querySelector("[data-background-color-input]");
+
+        const reset_settings_button = document.querySelector("[data-reset-settings-button]");
+
         // Google Fonts logic
         const googleFonts = [
             "Google Sans", "Roboto", "Roboto Condensed", "Roboto Mono", "Roboto Serif",
@@ -3523,6 +3598,9 @@
             line_height_label.innerHTML = tr("line_height");
             vertical_paddings_label.innerHTML = tr("vertical_paddings");
             horizontal_paddings_label.innerHTML = tr("horizontal_paddings");
+            font_color_label.innerHTML = tr("font_color");
+            background_color_label.innerHTML = tr("background_color");
+            reset_settings_button.innerHTML = tr("reset_settings");
         }
 
         // Initialize language settings
@@ -3574,10 +3652,14 @@
             root_style.setProperty("--book-font-weight", stored_font.weight);
             root_style.setProperty("--book-font-style", stored_font.style);
             root_style.setProperty("--book-line-height", `${stored_font.lineHeight}em`);
+            root_style.setProperty("--book-color", stored_font.color || "#000000");
+            root_style.setProperty("--book-background", stored_font.background || "#ffffff");
             font_size_value.innerHTML = stored_font.size;
             line_height_value.innerHTML = stored_font.lineHeight;
             font_family_select.value = stored_font.family;
             font_family_select.style.fontFamily = stored_font.family;
+            font_color_input.value = stored_font.color || "#000000";
+            background_color_input.value = stored_font.background || "#ffffff";
 
             if (stored_font.weight === "bold") {
                 font_weight_button.classList.add("active");
@@ -3686,7 +3768,7 @@
                     rec_book.innerHTML = `
                         <div class="book__title">
                             <span>${recent.title} &nbsp;&nbsp;</span> 
-                            <span style="color: #aaa; font-style: italic;">[ ${recent.author} ]</span>
+                            <span style="color: var(--book-color); font-style: italic;">[ ${recent.author} ]</span>
                         </div>
 
                         <div class="book__info">
@@ -3724,7 +3806,7 @@
                         fav_book.innerHTML = `
                             <div class="book__title">
                                 <span>${book.title} &nbsp;&nbsp;</span> 
-                                <span style="color: #aaa; font-style: italic;">[ ${book.author} ]</span>
+                                <span style="color: var(--book-color); font-style: italic;">[ ${book.author} ]</span>
                             </div>
 
                             <div class="book__info">
@@ -3833,8 +3915,10 @@
 
             if (is_toolbox) {
                 enable_close_zone();
+                document.body.classList.add("scroll_lock");
             } else {
                 disable_close_zone();
+                document.body.classList.remove("scroll_lock");
             };
         });
 
@@ -3959,6 +4043,25 @@
             init_font();
         });
 
+        font_color_input.addEventListener("input", async (event) => {
+            let stored_font = await get_settings("font");
+            stored_font.color = event.target.value;
+            await set_font(stored_font);
+            init_font();
+        });
+
+        background_color_input.addEventListener("input", async (event) => {
+            let stored_font = await get_settings("font");
+            stored_font.background = event.target.value;
+            await set_font(stored_font);
+            init_font();
+        });
+
+        reset_settings_button.addEventListener("click", () => {
+            close_toolbox();
+            create_dialog_window(tr("reset_settings_question"), "reset_all_settings()");
+        });
+
         search_field.addEventListener("input", () => render_library());
 
         add_book_button.addEventListener("click", () => {
@@ -4050,6 +4153,7 @@
             dialog_window_text.innerHTML = content;
             dialog_window.style.display = "flex";
             confirm_button.setAttribute("onclick", fn);
+            document.body.classList.add("scroll_lock");
         };
 
         // Reset dialog window
@@ -4057,13 +4161,15 @@
             dialog_window.style.display = "none";
             dialog_window_text.innerHTML = "";
             confirm_button.removeAttribute("onclick");
+            document.body.classList.remove("scroll_lock");
         };
 
         // Close toolbox
         function close_toolbox() {
             is_toolbox = false;
             toolbox_container.style.display = "none";
-            disable_close_zone()
+            disable_close_zone();
+            document.body.classList.remove("scroll_lock");
         };
 
         // Toggle tools
@@ -4082,7 +4188,8 @@
             document.getElementById(active_row_actions).remove();
             is_actions_tools = false;
             active_row_actions = false;
-            disable_close_zone()
+            disable_close_zone();
+            document.body.classList.remove("scroll_lock");
         };
 
         // Delete all books in library
@@ -4091,6 +4198,14 @@
             reset_dialog_window();
             app_reload();
         };
+
+        // Reset all reader settings
+        async function reset_all_settings() {
+            await set_font();
+            await set_paddings();
+            reset_dialog_window();
+            app_reload();
+        }
 
         // Open selected book
         async function open_book(id) {
@@ -4265,6 +4380,7 @@
             active_book = book_id;
             is_actions_tools = true;
             enable_close_zone();
+            document.body.classList.add("scroll_lock");
             add_actions_tools(book_id, book_favorite, book_read, row_id);
         };
 
@@ -4460,7 +4576,7 @@
             return lang;
         }
 
-        async function set_font(f = { size: 20, family: "Arial, Helvetica, sans-serif", weight: "normal", style: "normal", lineHeight: 1.5 }) {
+        async function set_font(f = { size: 20, family: "Arial, Helvetica, sans-serif", weight: "normal", style: "normal", lineHeight: 1.5, color: "#000000", background: "#ffffff" }) {
             await set_setting("font", f);
             return f;
         }
