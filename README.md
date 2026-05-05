@@ -1,8 +1,8 @@
-# AshtiEmile Reader
+# AshtiEmile Book Reader
 
-**AshtiEmile Reader** is a premium, standalone, and highly portable HTML book reader. Designed for users who value simplicity, privacy, and a refined reading experience, this application runs entirely in your web browser without the need for a backend or installation.
+**AshtiEmile Book Reader** is a premium, standalone, and highly portable HTML book reader. Designed for users who value simplicity, privacy, and a refined reading experience, this application runs entirely in your web browser without the need for a backend or installation.
 
-![AshtiEmile Reader](https://img.shields.io/badge/Status-Stable-brightgreen)
+![AshtiEmile Book Reader](https://img.shields.io/badge/Status-Stable-brightgreen)
 ![Version](https://img.shields.io/badge/Version-1.0-blue)
 ![Portability](https://img.shields.io/badge/Portable-Standalone_HTML-orange)
 
