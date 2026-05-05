@@ -631,6 +631,7 @@
 <body>
     <div class="close_zone" data-close-zone></div>
     <input type="file" accept=".html" multiple style="display: none;" data-add-file-input>
+    <input type="file" accept=".json" style="display: none;" data-import-json-input>
 
     <div class="toolbar__container">
         <div class="toolbar__left_side">
@@ -651,6 +652,7 @@
             <div class="toolbox__main_tools" data-toolbox-main-tools>
                 <button class="toolbox__button" type="button" data-full-screen-button></button>
                 <button class="toolbox__button" type="button" data-add-book-button></button>
+                <button class="toolbox__button" type="button" data-import-library-button></button>
                 <button class="toolbox__button" type="button" data-export-library-button></button>
                 <button class="toolbox__button" type="button" data-clear-library-button></button>
                 <button class="toolbox__button" type="button" data-language-button></button>
@@ -1400,6 +1402,10 @@
             export_library: {
                 "en-US": "Export Library",
                 "uk-UA": "Експортувати бібліотеку",
+            },
+            import_library: {
+                "en-US": "Import Library",
+                "uk-UA": "Імпортувати бібліотеку",
             },
             export_progress_question: {
                 "en-US": "Include reading progress?",
@@ -3441,6 +3447,7 @@
         const language_list = document.querySelector("[data-language-list]");
         const close_zone = document.querySelector("[data-close-zone]");
         const add_file_input = document.querySelector("[data-add-file-input]");
+        const import_json_input = document.querySelector("[data-import-json-input]");
         const search_field = document.querySelector("[data-search-field]");
         const dialog_window = document.querySelector("[data-dialog-window]");
         const dialog_window_text = document.querySelector("[data-dialog-window-text]");
@@ -3457,6 +3464,7 @@
         const full_screen_button = document.querySelector("[data-full-screen-button]");
         const full_screen_button2 = document.querySelector("[data-full-screen-button2]");
         const add_book_button = document.querySelector("[data-add-book-button]");
+        const import_library_button = document.querySelector("[data-import-library-button]");
         const export_library_button = document.querySelector("[data-export-library-button]");
         const clear_library_button = document.querySelector("[data-clear-library-button]");
         const language_button = document.querySelector("[data-language-button]");
@@ -3602,6 +3610,7 @@
             full_screen_button.innerHTML = tr("full_screen");
             full_screen_button2.innerHTML = tr("full_screen");
             add_book_button.innerHTML = tr("add_book");
+            import_library_button.innerHTML = tr("import_library");
             export_library_button.innerHTML = tr("export_library");
             clear_library_button.innerHTML = tr("clear_library");
             language_button.innerHTML = `<span>${tr("language")}</span> <span>${forwardArrow}</span>`;
@@ -3909,8 +3918,6 @@
             if (is_toolbox) close_toolbox();
             if (is_actions_tools) close_actions_tools();
         });
-
-
 
         toolbox_toggle_button.addEventListener("click", () => {
             toolbox_container.style.display = is_toolbox ? "none" : "flex";
@@ -4661,6 +4668,69 @@
             confirm_button.innerHTML = tr("confirm"); // "Yes" / "Так"
             cancel_button.innerHTML = tr("no");      // "No" / "Ні"
         });
+
+        import_library_button.addEventListener("click", () => {
+            close_toolbox();
+            import_json_input.click();
+        });
+
+        import_json_input.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const text = await file.text();
+            let importedBooks;
+            try {
+                importedBooks = JSON.parse(text);
+                if (!Array.isArray(importedBooks)) throw new Error("Invalid JSON format: expected an array of books.");
+            } catch (e) {
+                window.alert(e.message);
+                return;
+            }
+
+            const txRead = db.transaction("books", "readonly");
+            const storeRead = txRead.objectStore("books");
+            const reqAll = storeRead.getAll();
+
+            reqAll.onsuccess = async () => {
+                const existingBooks = reqAll.result;
+                const allBooks = [...existingBooks, ...importedBooks];
+
+                // Regenerate IDs for ALL books
+                const updatedBooks = allBooks.map(book => ({
+                    ...book,
+                    id: id_gen(4)
+                }));
+
+                const txWrite = db.transaction("books", "readwrite");
+                const storeWrite = txWrite.objectStore("books");
+
+                // Clear existing books first
+                const clearReq = storeWrite.clear();
+
+                clearReq.onsuccess = () => {
+                    updatedBooks.forEach(book => {
+                        storeWrite.put(book);
+                    });
+
+                    txWrite.oncomplete = () => {
+                        app_reload();
+                    };
+                };
+
+                clearReq.onerror = (event) => {
+                    window.alert(event.target.error);
+                };
+            };
+
+            reqAll.onerror = (event) => {
+                window.alert(event.target.error);
+            };
+
+            // Reset input
+            event.target.value = "";
+        });
+
     </script>
 </body>
 
