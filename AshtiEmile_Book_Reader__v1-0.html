@@ -4600,6 +4600,33 @@
                 toolbar_battery_info.innerHTML = `${(battery.level * 100).toFixed(0)}%`;
             });
         }, 1000);
+
+
+        async function export_all_books() {
+            const tx = db.transaction("books", "readonly");
+            const store = tx.objectStore("books");
+            const req = store.getAll();
+
+            request.onsuccess = (event) => {
+                const db = event.target.result;
+                const transaction = db.transaction(storeName, "readonly");
+                const store = transaction.objectStore(storeName);
+                const getAllRequest = store.getAll();
+
+                getAllRequest.onsuccess = () => {
+                    const booksData = getAllRequest.result;
+                    const jsonOutput = JSON.stringify(booksData, null, 2);
+
+                    const blob = new Blob([jsonOutput], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "only_books.json";
+                    a.click();
+                };
+            };
+
+        }
     </script>
 </body>
 
