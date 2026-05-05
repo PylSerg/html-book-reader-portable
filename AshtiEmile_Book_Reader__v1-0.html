@@ -3945,8 +3945,6 @@
 
             let stored_font = await get_settings("font");
             if (stored_font && stored_font.family) {
-                // If stored font is not in options, it might be a google font and we went offline.
-                // It will just revert to the first option, which is fine.
                 font_family_select.value = stored_font.family;
             } else if (currentVal) {
                 font_family_select.value = currentVal;
@@ -5054,8 +5052,8 @@
         export_library_button.addEventListener("click", () => {
             close_toolbox();
             create_dialog_window(tr("export_progress_question"), "export_library(true)", "export_library(false)");
-            confirm_button.innerHTML = tr("confirm"); // "Yes" / "Так"
-            cancel_button.innerHTML = tr("no");      // "No" / "Ні"
+            confirm_button.innerHTML = tr("confirm");
+            cancel_button.innerHTML = tr("no");
         });
 
         import_library_button.addEventListener("click", () => {
